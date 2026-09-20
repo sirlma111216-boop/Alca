@@ -58,6 +58,7 @@ exclusion, pause, cancel, progress, replay.eventLog, result.itemStats
   "difficulty": "normal",                              // "easy"|"normal"|"hard"|"custom"
   "difficultySettings": { /* 선택 — 프리셋 위에 덮어쓸 값 */ },
   "roundDurationMs": 30000,
+  "roundMode": "fixed",                                // "fixed" | "until-cleared"
   "selectionRule": { "kind": "ranks", "ranks": [3] },
   "excludedParticipantIds": ["stu_c3d4"],              // 이미 발표한 사람 등
   "seed": "KX7M2PQR4T",
@@ -98,7 +99,8 @@ if (!parsed.ok) {
 |---|---|---|
 | `mode` | `"auto"` | 경고 후 `"auto"` |
 | `difficulty` | `"normal"` | 경고 후 `"normal"` |
-| `roundDurationMs` | `30000` | 5,000 ~ 300,000 으로 자르고 경고 |
+| `roundDurationMs` | `30000` (until-cleared 면 `120000`) | 5,000 ~ 300,000 으로 자르고 경고 |
+| `roundMode` | `"fixed"` | 모르는 값 → `"fixed"` + 경고 |
 | `selectionRule` | `{kind:"ranks",ranks:[1]}` | `INVALID_SELECTION_RULE` 로 거절 |
 | `excludedParticipantIds` | `[]` | 명단에 없는 ID 는 경고 후 무시 |
 | `seed` | `"BRICKPICK"` | — |
@@ -160,6 +162,7 @@ if (!parsed.ok) {
   "bricksDestroyed": 15,
   "playedMs": 30000,
   "wavesCleared": 0,
+  "clearedAtMs": null,          // 벽돌을 처음 전부 깬 시각(ms). 못 깼으면 null
   "items": [                    // 한 번도 안 나온 종류는 생략된다
     { "kind": "life", "dropped": 2, "collected": 1 }
   ],
@@ -187,6 +190,26 @@ if (!parsed.ok) {
 > **점수와 선정 결과는 화면 문구를 분석하지 않아도 프로그램에서 바로 쓸 수 있습니다.**
 > `selectedParticipantIds` 와 `participants[].eligibleRank` 만 보면 됩니다.
 
+### `roundMode` — 경기가 끝나는 방식
+
+| 값 | 언제 끝나나 | 순위 기준 |
+|---|---|---|
+| `"fixed"` (기본) | `roundDurationMs` 가 지나면 | 점수 내림차순 |
+| `"until-cleared"` | **벽돌을 전부 깨면** 그 참가자의 경기가 끝난다 | **다 깬 사람 먼저, 그중 빨리 깬 순** |
+
+`"until-cleared"` 에서 `roundDurationMs` 는 **최대 시간**(안전장치)입니다.
+아무도 못 깨면 그 시간에 끊습니다. 생략하면 120,000ms(2분)이 들어갑니다.
+
+- **자동 경기**: 누군가 먼저 다 깨는 순간 **전원의 경기가 함께** 끝납니다.
+- **직접 조작 · 실시간 참여**: 각자 자기가 다 깨면 그 차례가 끝납니다.
+
+순위가 점수가 아니라 시간인 이유: 다 깨면 모든 벽돌 점수 + 클리어 보너스를 받아
+**전원이 정확히 같은 점수**가 되기 때문입니다. 못 깬 사람끼리는 평소대로 점수 순이고,
+마지막 두 단계(남은 목숨 → seed 추첨)는 그대로입니다.
+
+결과의 `participants[].clearedAtMs` 로 누가 언제 깼는지 알 수 있습니다(못 깼으면 `null`).
+
+---
 ### `selectionIssue` — 규칙을 다 못 채웠을 때
 
 경기 **시작 전**에도 후보 수로 선정 규칙을 검증합니다. 그런데 직접 조작 모드에서는

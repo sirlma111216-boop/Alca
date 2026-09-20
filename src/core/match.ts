@@ -51,6 +51,8 @@ export interface ParticipantRun {
   bricksDestroyed: number
   playedMs: number
   wavesCleared: number
+  /** 벽돌을 처음 전부 깬 시각(ms). 못 깼으면 null. */
+  clearedAtMs: number | null
   items: ItemStat[]
   excluded: boolean
   inputLog: ParticipantInputLog | null
@@ -113,6 +115,7 @@ export class Match {
       bricksDestroyed: 0,
       playedMs: 0,
       wavesCleared: 0,
+      clearedAtMs: null,
       items: emptyItemStats(),
       excluded: excluded.has(participant.id),
       inputLog: null,
@@ -180,6 +183,11 @@ export class Match {
     this.phase = 'running'
   }
 
+  /** "다 깰 때까지" 방식인가. roundDurationMs 는 이때 최대 시간으로 쓰인다. */
+  get untilCleared(): boolean {
+    return this.input.roundMode === 'until-cleared'
+  }
+
   get currentRun(): ParticipantRun | null {
     if (this.input.mode === 'auto') return null
     return this.runs[this.currentIndex] ?? null
@@ -200,7 +208,10 @@ export class Match {
         const pilotInput = run.autopilot ? run.autopilot.decide() : NEUTRAL_INPUT
         arena.step(pilotInput)
       }
-      if (this.stepsDone >= this.totalSteps) {
+      // "다 깰 때까지" — 누군가 벽돌을 전부 깨는 순간 전체 경기가 끝난다(경주).
+      const someoneCleared =
+        this.untilCleared && this.runs.some((r) => r.arena?.firstClearAt != null)
+      if (someoneCleared || this.stepsDone >= this.totalSteps) {
         for (const run of this.runs) this.completeRun(run, 'played')
         this.finishMatch()
       }
@@ -215,8 +226,10 @@ export class Match {
     this.recorder.record(this.stepsDone, actual)
     arena.step(actual)
 
-    // 제한 시간이 끝났거나 목숨을 모두 잃으면 그 참가자의 차례가 끝난다.
-    if (this.stepsDone >= this.totalSteps || arena.gameOver) {
+    // 제한 시간이 끝났거나, 목숨을 모두 잃었거나,
+    // "다 깰 때까지" 방식에서 벽돌을 전부 깼으면 그 참가자의 차례가 끝난다.
+    const cleared = this.untilCleared && arena.firstClearAt != null
+    if (cleared || this.stepsDone >= this.totalSteps || arena.gameOver) {
       this.completeRun(run, 'played')
       this.advanceToNextParticipant()
     }
@@ -230,7 +243,11 @@ export class Match {
     run.livesRemaining = arena.lives
     run.bricksDestroyed = arena.bricksDestroyed
     run.wavesCleared = arena.wavesCleared
-    run.playedMs = Math.round(arena.gameOverAt ?? arena.simTimeMs)
+    run.clearedAtMs = arena.firstClearAt === null ? null : Math.round(arena.firstClearAt)
+    // 다 깨고 끝났으면 그때까지가 실제 플레이 시간이다.
+    run.playedMs = Math.round(
+      (this.untilCleared ? arena.firstClearAt : null) ?? arena.gameOverAt ?? arena.simTimeMs,
+    )
     // 한 번도 나오지 않은 아이템은 빼서 결과 JSON 이 불필요하게 커지지 않게 한다.
     run.items = ITEM_KINDS.map((kind) => ({
       kind,
@@ -268,6 +285,7 @@ export class Match {
     run.score = null
     run.livesRemaining = null
     run.playedMs = 0
+    run.clearedAtMs = null
     run.arena?.finish()
     run.arena = null
     this.advanceToNextParticipant()
@@ -386,11 +404,16 @@ export class Match {
         bricksDestroyed: run.bricksDestroyed,
         playedMs: run.playedMs,
         wavesCleared: run.wavesCleared,
+        clearedAtMs: playStatus === 'not_played' ? null : run.clearedAtMs,
         items: run.items,
       }
     })
 
-    const participants = computeRanking(entries, { seed: this.input.seed })
+    const participants = computeRanking(entries, {
+      seed: this.input.seed,
+      // "다 깰 때까지" 는 다 깬 사람이 전부 같은 점수가 되므로 깬 시각으로 가른다.
+      rankBy: this.untilCleared ? 'clear-time' : 'score',
+    })
     const selection = selectPresenters(participants, this.input.selectionRule)
 
     return {
@@ -404,6 +427,7 @@ export class Match {
         difficulty: this.input.difficulty,
         difficultySettings: this.settings,
         roundDurationMs: this.input.roundDurationMs,
+        roundMode: this.input.roundMode,
         selectionRule: this.input.selectionRule,
         excludedParticipantIds: [...this.input.excludedParticipantIds],
       },

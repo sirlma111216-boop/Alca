@@ -5,7 +5,11 @@
  * 어떤 값이 적용됐는지는 다음 단계의 "규칙 요약" 에서 전부 다시 확인할 수 있다.
  */
 
-import { DIFFICULTY_LABELS, ROUND_DURATION_OPTIONS_MS } from '../../core'
+import {
+  DIFFICULTY_LABELS,
+  ROUND_DURATION_OPTIONS_MS,
+  UNTIL_CLEARED_CAP_OPTIONS_MS,
+} from '../../core'
 import type { DifficultyPreset, GameMode } from '../../core'
 import { Callout } from '../components/Callout'
 import { ChoiceCards } from '../components/ChoiceCards'
@@ -81,13 +85,48 @@ export function ModeScreen({ state, dispatch }: ModeScreenProps) {
               : '이 시간이 지나면 경기가 끝나고 순위가 확정됩니다.'
           }
           variant="chips"
-          value={String(state.roundDurationMs)}
-          onChange={(v) => dispatch({ type: 'setRoundDuration', ms: Number(v) })}
-          options={ROUND_DURATION_OPTIONS_MS.map((ms) => ({
-            value: String(ms),
-            label: `${Math.round(ms / 1000)}초`,
-          }))}
+          value={state.roundMode === 'until-cleared' ? 'cleared' : String(state.roundDurationMs)}
+          onChange={(v) => {
+            if (v === 'cleared') dispatch({ type: 'setRoundMode', mode: 'until-cleared' })
+            else {
+              dispatch({ type: 'setRoundMode', mode: 'fixed' })
+              dispatch({ type: 'setRoundDuration', ms: Number(v) })
+            }
+          }}
+          options={[
+            ...ROUND_DURATION_OPTIONS_MS.map((ms) => ({
+              value: String(ms),
+              label: `${Math.round(ms / 1000)}초`,
+            })),
+            { value: 'cleared', label: '다 깰 때까지' },
+          ]}
         />
+
+        {state.roundMode === 'until-cleared' ? (
+          <div className="bp-clearmode">
+            <p className="bp-clearmode__lead">
+              <strong>벽돌을 전부 깨면 경기가 끝납니다.</strong>{' '}
+              {state.mode === 'auto'
+                ? '자동 경기에서는 누군가 먼저 다 깨는 순간 전원의 경기가 함께 끝납니다 — 경주입니다.'
+                : '참가자마다 자기가 다 깨면 그 차례가 끝납니다.'}
+            </p>
+            <p className="bp-clearmode__note">
+              다 깬 사람이 앞에 오고, 그중 <strong>빨리 깬 순서</strong>로 순위가 정해집니다. 다 깨면
+              점수가 모두 같아지기 때문입니다. 못 깬 사람끼리는 평소대로 점수 순입니다.
+            </p>
+            <ChoiceCards<string>
+              legend="아무도 못 깰 때 끊을 시간"
+              description="안전장치입니다. 이 시간이 지나면 못 깼더라도 경기를 끝냅니다."
+              variant="chips"
+              value={String(state.roundDurationMs)}
+              onChange={(v) => dispatch({ type: 'setRoundDuration', ms: Number(v) })}
+              options={UNTIL_CLEARED_CAP_OPTIONS_MS.map((ms) => ({
+                value: String(ms),
+                label: ms >= 60000 ? `${Math.round(ms / 60000)}분` : `${Math.round(ms / 1000)}초`,
+              }))}
+            />
+          </div>
+        ) : null}
         <p className="bp-note">
           전체 예상 진행 시간: 약 <strong>{estimate}</strong> (준비와 결과 확인 시간을 포함한
           어림값입니다.)

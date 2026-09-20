@@ -159,6 +159,8 @@ export interface MatchStartView {
   /** core 의 Partial<DifficultySettings> — 아이템 설정 포함. */
   difficultySettings?: unknown
   roundDurationMs: number
+  /** core 의 RoundMode. "until-cleared" 면 roundDurationMs 는 최대 시간이다. */
+  roundMode?: string
   /** 학생 화면에서는 쓰지 않지만, 규칙 요약을 보여 줄 때 쓴다. */
   selectionRule?: unknown
   soundEnabled: boolean
@@ -188,6 +190,8 @@ export interface FinalReport {
   bricksDestroyed: number
   playedMs: number
   wavesCleared: number
+  /** 벽돌을 처음 전부 깬 시각(ms). 못 깼으면 null. "다 깰 때까지" 순위에 쓴다. */
+  clearedAtMs: number | null
   /** [{kind, dropped, collected}] — core 의 ItemStat. */
   items: unknown
 }

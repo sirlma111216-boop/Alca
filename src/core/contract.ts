@@ -25,6 +25,25 @@ export const ROUND_DURATION_OPTIONS_MS = [15_000, 30_000, 60_000] as const
 export const MIN_ROUND_DURATION_MS = 5_000
 export const MAX_ROUND_DURATION_MS = 300_000
 
+/**
+ * 경기가 끝나는 방식.
+ *
+ *  - fixed         : 정해진 시간이 지나면 끝난다 (기본).
+ *  - until-cleared : **벽돌을 전부 깨면** 그 참가자의 경기가 끝난다.
+ *                    아무도 못 깨는 경우를 대비해 roundDurationMs 가 **최대 시간**으로 쓰인다.
+ *
+ * until-cleared 에서는 순위를 **"다 깬 사람 먼저, 그중 빨리 깬 순"** 으로 매긴다.
+ * 다 깨면 전원이 같은 점수(모든 벽돌 + 클리어 보너스)가 되어 점수로는 갈리지 않기 때문이다.
+ * 못 깬 사람끼리는 평소대로 점수 순이다.
+ */
+export type RoundMode = 'fixed' | 'until-cleared'
+
+/** "다 깰 때까지" 에서 아무도 못 깰 때 경기를 끊는 기본 최대 시간. */
+export const UNTIL_CLEARED_DEFAULT_CAP_MS = 120_000
+
+/** 화면에서 고를 수 있는 최대 시간 후보. */
+export const UNTIL_CLEARED_CAP_OPTIONS_MS = [60_000, 120_000, 180_000, 300_000] as const
+
 /** 기본 지원 참가자 수. 초과는 거절하고 안내한다. */
 export const MIN_PARTICIPANTS = 1
 export const MAX_PARTICIPANTS = 40
@@ -155,6 +174,11 @@ export interface BrickPickInput {
   /** 프리셋 위에 덮어쓸 세부 수치. 생략하면 프리셋 그대로. */
   difficultySettings?: Partial<DifficultySettings>
   roundDurationMs: number
+  /**
+   * 경기가 끝나는 방식. 생략하면 'fixed'.
+   * 'until-cleared' 면 roundDurationMs 는 **최대 시간**(안전장치)으로 쓰인다.
+   */
+  roundMode: RoundMode
   selectionRule: SelectionRule
   /** 이미 발표한 사람 등 후보에서 뺄 참가자 ID 목록. */
   excludedParticipantIds: string[]
@@ -229,6 +253,11 @@ export interface ParticipantResult {
   playedMs: number
   /** 클리어(전멸)시킨 판 수. */
   wavesCleared: number
+  /**
+   * 벽돌을 처음으로 전부 깬 시각(ms). 한 번도 못 깼으면 null.
+   * "다 깰 때까지" 방식에서 순위를 가르는 값이다.
+   */
+  clearedAtMs: number | null
   /** 아이템 획득 통계. */
   items: ItemStat[]
   tie: TieInfo
@@ -278,6 +307,7 @@ export interface BrickPickResult {
     difficulty: DifficultyPreset
     difficultySettings: DifficultySettings
     roundDurationMs: number
+    roundMode: RoundMode
     selectionRule: SelectionRule
     excludedParticipantIds: string[]
   }
@@ -533,10 +563,17 @@ export function parseBrickPickInput(raw: unknown): ValidationResult<BrickPickInp
       ? raw.difficulty
       : 'normal'
 
+  const roundMode: RoundMode = raw.roundMode === 'until-cleared' ? 'until-cleared' : 'fixed'
+  if (raw.roundMode !== undefined && raw.roundMode !== 'fixed' && raw.roundMode !== 'until-cleared') {
+    warnings.push(`알 수 없는 경기 방식 "${String(raw.roundMode)}" → 정해진 시간으로 진행합니다.`)
+  }
+
   let roundDurationMs =
     typeof raw.roundDurationMs === 'number' && Number.isFinite(raw.roundDurationMs)
       ? Math.round(raw.roundDurationMs)
-      : 30_000
+      : roundMode === 'until-cleared'
+        ? UNTIL_CLEARED_DEFAULT_CAP_MS
+        : 30_000
   if (roundDurationMs < MIN_ROUND_DURATION_MS || roundDurationMs > MAX_ROUND_DURATION_MS) {
     const clamped = Math.min(MAX_ROUND_DURATION_MS, Math.max(MIN_ROUND_DURATION_MS, roundDurationMs))
     warnings.push(`경기 시간 ${roundDurationMs}ms 를 ${clamped}ms 로 조정했습니다.`)
@@ -580,6 +617,7 @@ export function parseBrickPickInput(raw: unknown): ValidationResult<BrickPickInp
       difficulty,
       difficultySettings,
       roundDurationMs,
+      roundMode,
       selectionRule: rule.value,
       excludedParticipantIds,
       seed,

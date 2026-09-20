@@ -112,7 +112,10 @@ export function MatchScreen({ state, onComplete, onCancel, onError }: MatchScree
           경기 진행 중
           <span className="bp-match__meta">
             {state.mode === 'auto' ? '자동 경기' : '직접 조작'} · 참가자{' '}
-            {state.participants.length}명 · {Math.round(state.roundDurationMs / 1000)}초
+            {state.participants.length}명 ·{' '}
+            {state.roundMode === 'until-cleared'
+              ? `다 깰 때까지 (최대 ${Math.round(state.roundDurationMs / 1000)}초)`
+              : `${Math.round(state.roundDurationMs / 1000)}초`}
           </span>
         </h1>
         {confirmExit ? (

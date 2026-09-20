@@ -84,7 +84,14 @@ export function SummaryScreen({ state, dispatch, names }: SummaryScreenProps) {
             />
             <Row label="선정 후보 (최대)" value={`${candidates}명`} />
             <Row label="경기 방식" value={state.mode === 'auto' ? '자동 경기' : '직접 조작'} />
-            <Row label="경기 시간" value={`${Math.round(state.roundDurationMs / 1000)}초`} />
+            <Row
+              label="경기 시간"
+              value={
+                state.roundMode === 'until-cleared'
+                  ? `벽돌을 다 깰 때까지 (최대 ${Math.round(state.roundDurationMs / 1000)}초)`
+                  : `${Math.round(state.roundDurationMs / 1000)}초`
+              }
+            />
             <Row
               label="예상 진행 시간"
               value={`약 ${formatDuration(estimatedDurationMs(state))}`}

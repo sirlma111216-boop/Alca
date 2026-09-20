@@ -1767,3 +1767,24 @@ button.bp-stepper__button {
   line-height: 1.7;
   color: var(--bp-text-dim, #8ea0c9);
 }
+
+/* "다 깰 때까지" 경기 방식 안내 */
+.bp-clearmode {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--bp-line, #1e2b52);
+  border-left: 4px solid var(--bp-accent-warm, #fbbf24);
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.07);
+}
+.bp-clearmode__lead {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.bp-clearmode__note {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--bp-text-dim, #8ea0c9);
+}

@@ -21,6 +21,8 @@ import {
   checkSelectionRule,
   defaultDifficultySettings,
   resolveDifficulty,
+  RoundMode,
+  UNTIL_CLEARED_DEFAULT_CAP_MS,
 } from '../../core'
 import type {
   BrickPickResult,
@@ -103,6 +105,8 @@ export interface StandaloneState {
   /** 실제로 경기에 넘어가는 최종 난이도 수치. */
   settings: DifficultySettings
   roundDurationMs: number
+  /** 경기가 끝나는 방식. */
+  roundMode: RoundMode
   selection: SelectionDraft
   /** 이번 경기에서 후보에서 뺄 참가자. */
   excludedIds: string[]
@@ -460,6 +464,7 @@ export type StandaloneAction =
   | { type: 'patchItems'; patch: Partial<ItemSettings> }
   | { type: 'resetSettings' }
   | { type: 'setRoundDuration'; ms: number }
+  | { type: 'setRoundMode'; mode: RoundMode }
   | { type: 'patchSelection'; patch: Partial<SelectionDraft> }
   | { type: 'toggleExcluded'; id: string }
   | { type: 'setExcluded'; ids: string[] }
@@ -492,6 +497,7 @@ export function createInitialState(): StandaloneState {
     basePreset,
     settings: defaultDifficultySettings(basePreset),
     roundDurationMs: 30_000,
+    roundMode: 'fixed',
     selection: { presetId: 'best', count: 1, rank: 3, ranks: [1] },
     excludedIds: [],
     presentedIds: [],
@@ -641,6 +647,14 @@ export function reducer(state: StandaloneState, action: StandaloneAction): Stand
 
     case 'setRoundDuration':
       return { ...state, roundDurationMs: action.ms }
+    case 'setRoundMode':
+      // "다 깰 때까지" 로 바꾸면 roundDurationMs 는 '아무도 못 깰 때 끊을 시간' 이 된다.
+      return {
+        ...state,
+        roundMode: action.mode,
+        roundDurationMs:
+          action.mode === 'until-cleared' ? UNTIL_CLEARED_DEFAULT_CAP_MS : 30_000,
+      }
 
     case 'patchSelection':
       return { ...state, selection: { ...state.selection, ...action.patch }, error: null }
@@ -784,6 +798,7 @@ export interface MatchInput {
   difficulty: DifficultyPreset
   difficultySettings: DifficultySettings
   roundDurationMs: number
+  roundMode: RoundMode
   selectionRule: SelectionRule
   excludedParticipantIds: string[]
   seed: string
@@ -802,6 +817,7 @@ export function buildMatchInput(state: StandaloneState): MatchInput {
     difficulty: state.difficulty,
     difficultySettings: state.settings,
     roundDurationMs: state.roundDurationMs,
+    roundMode: state.roundMode,
     selectionRule: ruleFromDraft(state.selection),
     excludedParticipantIds: state.excludedIds.filter((id) =>
       state.participants.some((p) => p.id === id),

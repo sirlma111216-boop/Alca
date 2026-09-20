@@ -26,6 +26,13 @@ function scoreText(p: ParticipantResult): string {
   return p.score === null ? '기록 없음' : `${p.score.toLocaleString('ko-KR')}점`
 }
 
+/** "다 깰 때까지" 경기에서 순위의 근거가 되는 값. 못 깼으면 그 사실을 적는다. */
+function clearText(p: ParticipantResult): string {
+  if (p.clearedAtMs === null) return '못 깸'
+  const sec = p.clearedAtMs / 1000
+  return `${sec < 10 ? sec.toFixed(1) : Math.round(sec)}초에 클리어`
+}
+
 function tieText(p: ParticipantResult, nameOf: (id: string) => string): string | null {
   if (!p.tie.tied) return null
   const others = p.tie.tiedWith.filter((id) => id !== p.id).map(nameOf)
@@ -75,6 +82,8 @@ export function ResultScreen({ state, dispatch, result }: ResultScreenProps) {
     [result],
   )
 
+  /** "다 깰 때까지" 경기였나. 그러면 순위 근거가 점수가 아니라 깬 시각이다. */
+  const byClearTime = result.appliedSettings.roundMode === 'until-cleared'
   const selected = result.selectedParticipantIds
     .map((id) => byId.get(id))
     .filter((p): p is ParticipantResult => Boolean(p))
@@ -159,6 +168,7 @@ export function ResultScreen({ state, dispatch, result }: ResultScreenProps) {
                   <span className="bp-winner__name">{p.nickname}</span>
                   <span className="bp-winner__facts">
                     후보 {p.eligibleRank}위 · 전체 {p.rank}위 · {scoreText(p)}
+                    {byClearTime ? ` · ${clearText(p)}` : ''}
                   </span>
                   {reason ? <span className="bp-winner__reason">{reason.reason}</span> : null}
                 </li>
@@ -201,7 +211,9 @@ export function ResultScreen({ state, dispatch, result }: ResultScreenProps) {
                 >
                   <span className="bp-rank-list__no">{p.rank}</span>
                   <span className="bp-rank-list__name">{p.nickname}</span>
-                  <span className="bp-rank-list__score">{scoreText(p)}</span>
+                  <span className="bp-rank-list__score">
+                    {byClearTime ? clearText(p) : scoreText(p)}
+                  </span>
                   {p.playStatus !== 'played' ? (
                     <span className="bp-tag">{PLAY_STATUS_LABELS[p.playStatus]}</span>
                   ) : null}
@@ -228,7 +240,9 @@ export function ResultScreen({ state, dispatch, result }: ResultScreenProps) {
                   >
                     <span className="bp-rank-list__no">{p.eligibleRank}</span>
                     <span className="bp-rank-list__name">{p.nickname}</span>
-                    <span className="bp-rank-list__score">{scoreText(p)}</span>
+                    <span className="bp-rank-list__score">
+                    {byClearTime ? clearText(p) : scoreText(p)}
+                  </span>
                     <span className="bp-rank-list__aside">전체 {p.rank}위</span>
                     {result.selectedParticipantIds.includes(p.id) ? (
                       <span className="bp-tag bp-tag--pick">발표자</span>

@@ -171,6 +171,11 @@ export class Arena {
   gameOver = false
   /** 목숨을 모두 잃은 시각(ms). 실제 플레이 시간 계산에 쓴다. */
   gameOverAt: number | null = null
+  /**
+   * 벽돌을 처음으로 전부 깬 시각(ms). 한 번도 못 깼으면 null.
+   * "다 깰 때까지" 경기 방식에서 경기를 끝내는 신호이자 순위를 가르는 값이다.
+   */
+  firstClearAt: number | null = null
 
   /** 아이템 통계 — 떨어진 횟수와 실제로 받은 횟수. */
   readonly itemStats: Record<ItemKind, { dropped: number; collected: number }>
@@ -809,6 +814,8 @@ export class Arena {
     this.score += WAVE_CLEAR_BONUS
     this.wavesCleared += 1
     this.wave += 1
+    // 처음 다 깬 순간만 기록한다. 판이 계속 이어져도 이 값은 바뀌지 않는다.
+    if (this.firstClearAt === null) this.firstClearAt = now
     this.emit({
       type: 'wave-clear',
       at: now,

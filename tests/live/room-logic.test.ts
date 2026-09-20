@@ -42,6 +42,7 @@ function done(token: string, nick: string, score: number, lives = 2): FinalRow {
       bricksDestroyed: Math.round(score / 20),
       playedMs: 60_000,
       wavesCleared: 0,
+      clearedAtMs: null,
       items: [],
     },
   }

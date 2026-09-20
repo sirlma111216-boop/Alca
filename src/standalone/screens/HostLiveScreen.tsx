@@ -20,6 +20,8 @@ import {
   ENGINE_VERSION,
   PLAY_STATUS_LABELS,
   ROUND_DURATION_OPTIONS_MS,
+  UNTIL_CLEARED_CAP_OPTIONS_MS,
+  UNTIL_CLEARED_DEFAULT_CAP_MS,
   SCHEMA_VERSION,
   SELECTION_PRESETS,
   checkSelectionRule,
@@ -36,6 +38,7 @@ import type {
   ParticipantResult,
   RankingEntry,
   SelectionRule,
+  RoundMode,
 } from '../../core'
 import { LiveClient, deviceToken, forgetHostCode, hostCodes } from '../../live/client'
 import type { HostCodeEntry } from '../../live/client'
@@ -70,6 +73,7 @@ interface MatchMemo {
   seed: string
   difficulty: DifficultyPreset
   roundDurationMs: number
+  roundMode: RoundMode
   rule: SelectionRule
   excludedNicks: string[]
   startedAt: string
@@ -201,6 +205,8 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
   /* 경기 설정 */
   const [difficulty, setDifficulty] = useState<DifficultyPreset>('normal')
   const [roundDurationMs, setRoundDurationMs] = useState<number>(30_000)
+  /** 'fixed' = 정해진 시간, 'until-cleared' = 벽돌을 다 깰 때까지. */
+  const [roundMode, setRoundMode] = useState<RoundMode>('fixed')
   const [presetId, setPresetId] = useState<string>('best')
   const [count, setCount] = useState(1)
   const [rankValue, setRankValue] = useState(1)
@@ -256,6 +262,7 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
           seed: liveMatch.seed,
           difficulty: (liveMatch.difficulty as DifficultyPreset) || 'normal',
           roundDurationMs: liveMatch.roundDurationMs,
+          roundMode: (liveMatch.roundMode as RoundMode) ?? 'fixed',
           rule: (liveMatch.selectionRule as SelectionRule | undefined) ?? rule,
           excludedNicks,
           startedAt: new Date().toISOString(),
@@ -353,6 +360,7 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
       seed: createSeedString(Math.random),
       difficulty,
       roundDurationMs,
+      roundMode,
       rule,
       excludedNicks: [...excludedNicks],
       startedAt: new Date().toISOString(),
@@ -362,6 +370,7 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
       seed: memo.seed,
       difficulty: memo.difficulty,
       roundDurationMs: memo.roundDurationMs,
+      roundMode,
       selectionRule: memo.rule,
       soundEnabled: matchSound,
       reducedMotion,
@@ -428,7 +437,11 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
       })
 
       // 순위와 발표자는 서버가 아니라 여기서 core 의 순수 함수로 낸다.
-      const participants = computeRanking(entries, { seed: memo.seed })
+      const participants = computeRanking(entries, {
+        seed: memo.seed,
+        // "다 깰 때까지" 는 다 깬 사람이 전부 같은 점수가 되므로 깬 시각으로 가른다.
+        rankBy: memo.roundMode === 'until-cleared' ? 'clear-time' : 'score',
+      })
       const outcome = selectPresenters(participants, memo.rule)
 
       const built: BrickPickResult = {
@@ -442,6 +455,7 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
           difficulty: memo.difficulty,
           difficultySettings: resolveDifficulty(memo.difficulty),
           roundDurationMs: memo.roundDurationMs,
+          roundMode: memo.roundMode,
           selectionRule: memo.rule,
           excludedParticipantIds: entries.filter((e) => e.excluded).map((e) => e.id),
         },
@@ -1190,14 +1204,45 @@ export function HostLiveScreen({ onExit, reducedMotion, soundEnabled }: HostLive
 
         <ChoiceCards<string>
           legend="경기 시간"
-          value={String(roundDurationMs)}
-          onChange={(v) => setRoundDurationMs(Number(v))}
+          value={roundMode === 'until-cleared' ? 'cleared' : String(roundDurationMs)}
+          onChange={(v) => {
+            if (v === 'cleared') {
+              setRoundMode('until-cleared')
+              setRoundDurationMs(UNTIL_CLEARED_DEFAULT_CAP_MS)
+            } else {
+              setRoundMode('fixed')
+              setRoundDurationMs(Number(v))
+            }
+          }}
           variant="chips"
-          options={ROUND_DURATION_OPTIONS_MS.map((ms) => ({
-            value: String(ms),
-            label: `${Math.round(ms / 1000)}초`,
-          }))}
+          options={[
+            ...ROUND_DURATION_OPTIONS_MS.map((ms) => ({
+              value: String(ms),
+              label: `${Math.round(ms / 1000)}초`,
+            })),
+            { value: 'cleared', label: '다 깰 때까지' },
+          ]}
         />
+
+        {roundMode === 'until-cleared' ? (
+          <div className="bp-live-clearnote">
+            <p>
+              <strong>벽돌을 전부 깨면 그 학생의 경기가 끝납니다.</strong> 다 깬 학생이 앞에 오고,
+              그중 <strong>빨리 깬 순서</strong>로 순위가 정해집니다. 다 깨면 점수가 모두 같아지기
+              때문입니다. 못 깬 학생끼리는 평소대로 점수 순입니다.
+            </p>
+            <ChoiceCards<string>
+              legend="아무도 못 깰 때 끊을 시간"
+              value={String(roundDurationMs)}
+              onChange={(v) => setRoundDurationMs(Number(v))}
+              variant="chips"
+              options={UNTIL_CLEARED_CAP_OPTIONS_MS.map((ms) => ({
+                value: String(ms),
+                label: ms >= 60000 ? `${Math.round(ms / 60000)}분` : `${Math.round(ms / 1000)}초`,
+              }))}
+            />
+          </div>
+        ) : null}
 
         <div className="bp-live-toggle">
           <input

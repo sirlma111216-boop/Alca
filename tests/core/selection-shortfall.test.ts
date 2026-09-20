@@ -144,6 +144,7 @@ describe('selectPresenters 가 issue 를 함께 낸다', () => {
     bricksDestroyed: 1,
     playedMs: 1000,
     wavesCleared: 0,
+    clearedAtMs: null,
     items: [],
     tie: { tied: false, tiedWith: [], resolvedBy: 'none' },
   })

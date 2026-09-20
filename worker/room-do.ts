@@ -343,6 +343,10 @@ export class RoomSession extends DurableObject {
             bricksDestroyed: num(d.bricksDestroyed, 0),
             playedMs: num(d.playedMs, 0),
             wavesCleared: num(d.wavesCleared, 0),
+            clearedAtMs:
+              d.clearedAtMs == null || !Number.isFinite(Number(d.clearedAtMs))
+                ? null
+                : num(d.clearedAtMs, 0),
             items: Array.isArray(d.items) ? d.items.slice(0, 16) : [],
           }
           await this.save()

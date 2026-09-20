@@ -30,6 +30,7 @@ import type {
   DifficultyPreset,
   DifficultySettings,
   ItemStat,
+  RoundMode,
 } from '../../core'
 import '../../styles/student.css'
 
@@ -66,6 +67,7 @@ interface FinalPayload {
   bricksDestroyed: number
   playedMs: number
   wavesCleared: number
+  clearedAtMs: number | null
   items: ItemStat[]
 }
 
@@ -308,6 +310,7 @@ export function StudentJoinScreen({ initialCode, onExit }: StudentJoinScreenProp
         bricksDestroyed: me?.bricksDestroyed ?? 0,
         playedMs: me?.playedMs ?? 0,
         wavesCleared: me?.wavesCleared ?? 0,
+        clearedAtMs: me?.clearedAtMs ?? null,
         items: me?.items ?? [],
       }
       pendingFinalRef.current = { payload, tries: 0 }
@@ -328,6 +331,8 @@ export function StudentJoinScreen({ initialCode, onExit }: StudentJoinScreenProp
         difficulty: match.difficulty as DifficultyPreset,
         difficultySettings: match.difficultySettings as Partial<DifficultySettings> | undefined,
         roundDurationMs: match.roundDurationMs,
+        // "다 깰 때까지" 면 엔진이 벽돌을 다 깬 순간 경기를 끝낸다.
+        roundMode: (match.roundMode as RoundMode | undefined) ?? 'fixed',
         // 혼자 도는 판이라 의미는 없다. 검증을 통과하기 위한 값이다.
         selectionRule: { kind: 'top', count: 1 },
         soundEnabled: match.soundEnabled,

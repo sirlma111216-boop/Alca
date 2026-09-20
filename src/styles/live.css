@@ -413,3 +413,18 @@
     flex-direction: column;
   }
 }
+
+/* "다 깰 때까지" 안내 (교사 실시간 화면) */
+.bp-live-clearnote {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-left: 4px solid #fbbf24;
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.07);
+}
+.bp-live-clearnote p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}

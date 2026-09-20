@@ -372,7 +372,13 @@ export function mountBrickPick(
   const sessionId =
     options.sessionId && options.sessionId.trim().length > 0 ? options.sessionId : newSessionId()
 
+  // ★ options 를 통째로 펼친 뒤 계산한 값만 덮어쓴다.
+  //   필드를 하나씩 옮겨 적으면, 계약에 칸이 늘었을 때 그 칸이 **조용히 사라진다**.
+  //   (roundMode 를 더했을 때 실제로 그렇게 됐다 — 화면에는 "다 깰 때까지" 라고 떠 있는데
+  //    엔진은 정해진 시간으로 돌았다.)
+  //   parseBrickPickInput 은 아는 칸만 읽으므로 콜백 같은 여분의 키가 섞여도 안전하다.
   const rawInput = {
+    ...options,
     schemaVersion: options.schemaVersion ?? SCHEMA_VERSION,
     sessionId,
     participants: options.participants,
@@ -380,6 +386,7 @@ export function mountBrickPick(
     difficulty: options.difficulty,
     difficultySettings: options.difficultySettings,
     roundDurationMs: options.roundDurationMs,
+    roundMode: options.roundMode,
     selectionRule: options.selectionRule,
     excludedParticipantIds: options.excludedParticipantIds,
     seed,
