@@ -11,10 +11,16 @@
 | 대안 | Netlify | `netlify.toml` |
 | 참고 | GitHub Pages | `VITE_BASE` 로 하위 경로 |
 
-> **이 문서를 쓴 시점에 실제 배포는 하지 않았습니다.**
-> Cloudflare 계정 연결과 도메인명이 아직 없기 때문입니다.
-> 코드·설정·검증 절차는 전부 완성돼 있고, 아래 순서를 그대로 따르면 됩니다.
-> 실제 도메인 대신 `brickpick.example.com` 을 예시로 썼습니다.
+## 현재 상태 (2026-09-20)
+
+| 항목 | 상태 |
+|---|---|
+| GitHub 저장소 | ✅ https://github.com/sirlma111216-boop/Alca (CI 통과) |
+| Cloudflare Workers Static Assets 배포 | ✅ **https://brickpick.sirlma.workers.dev** |
+| 사용자 도메인 연결 | ⬜ 아직 — 도메인명이 정해지면 3절대로 진행 |
+| 수업 앱 iframe 허용 목록 | ⬜ 아직 — 수업 앱 주소가 정해지면 2-C 절대로 진행 |
+
+아래에서 실제 도메인 대신 `brickpick.example.com` 을 예시로 씁니다.
 
 ---
 
