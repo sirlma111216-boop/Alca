@@ -1,0 +1,204 @@
+/**
+ * 디자인 토큰 — Together AI 계열의 디자인 언어를 브릭픽에 맞게 옮긴 것.
+ *
+ * 이 파일이 정하는 것
+ *  - 색 (검정·흰색·짙은 남색 세 면 + 3색 그라디언트 + 민트)
+ *  - 글자 (본문용 디스플레이 산세 / 라벨용 대문자 고정폭)
+ *  - 모서리·여백·선
+ *
+ * 규칙 (디자인 문서의 Don't 를 그대로 옮겼다)
+ *  1. 다섯 번째 강조색을 만들지 않는다. 주황→자홍→연보라 그라디언트와 민트가 전부다.
+ *  2. 그라디언트는 **하나의 덩어리**다. 한 색만 떼어 쓰거나, 순서를 바꾸거나, 네 번째 색을
+ *     더하지 않는다. 아이콘 크기로 줄이지도 않는다.
+ *  3. 본문 문단에 고정폭 글꼴을 쓰지 않는다. 고정폭은 **라벨 전용**이다.
+ *  4. 제목은 언제나 문장형. 대문자는 전부 고정폭 라벨의 몫이다.
+ *  5. 밝은 면의 카드에 그림자를 깔지 않는다. 깊이는 1px 선과 면의 명암 대비로만 만든다.
+ *  6. 기본 버튼은 살짝 둥근 사각형(4px)이다. 완전한 알약 모양으로 만들지 않는다.
+ *
+ * 면은 [짙은 남색 → 흰색 → 짙은 남색] 으로 번갈아 간다.
+ * 브릭픽에서는 머리띠·게임판·발표자 발표가 짙은 면, 설정 화면이 밝은 면이다.
+ *
+ * 글꼴 파일은 `main.tsx` 에서 불러온다 (@fontsource — 자체 호스팅이라
+ * 외부 CDN 을 타지 않는다. 교실 네트워크에서 막혀도 글꼴만 대체될 뿐 화면은 멀쩡하다).
+ */
+
+:root {
+  /* ── 면과 글자 ───────────────────────────────────────────────────────── */
+  --t-ink: #000000;
+  --t-canvas: #ffffff;
+  --t-canvas-dark: #010120;
+  --t-on-dark: #ffffff;
+
+  /**
+   * 보조 글씨. 밝은 면에서 캡션·표의 부차 값·바닥글 링크에 쓴다.
+   *
+   * 디자인 문서의 값은 #959494 (검정 40% 를 흰 면에 섞은 값) 인데,
+   * 흰 면에서 명도 대비가 **2.9:1** 이라 WCAG AA 기준(4.5:1)에 못 미친다.
+   * 11px 대문자 라벨까지 이 색이므로 교실에서 실제로 안 읽힌다.
+   * 그래서 같은 방식(검정을 더 진하게 섞기)으로 대비만 끌어올렸다 —
+   * 흰 면에서 5.7:1, 연한 면(#ebebeb)에서 4.8:1 이다.
+   */
+  --t-body: #666666;
+  /** 짙은 면의 보조 글씨. 프로젝터에서도 읽히도록 너무 흐리게 두지 않는다. */
+  --t-body-dark: rgba(255, 255, 255, 0.68);
+
+  /** 1px 선과, 이 디자인의 단 하나뿐인 연한 면 (표 머리·토글 레일). */
+  --t-hairline: #ebebeb;
+  /** 짙은 면 위의 1px 선. */
+  --t-hairline-dark: #26263a;
+  /** 짙은 면 안쪽 카드·뱃지의 조금 밝은 면. */
+  --t-surface-dark-soft: #313641;
+
+  /* ── 강조 ─────────────────────────────────────────────────────────────
+     앞의 셋은 그라디언트의 다리다. 단독 배경으로 쓰지 않는다.
+     민트만 부차 버튼과 수치 타일의 면으로 쓸 수 있다. */
+  --t-orange: #fc4c02;
+  --t-magenta: #ef2cc1;
+  --t-periwinkle: #bdbbff;
+  --t-mint: #c8f6f9;
+
+  /** 이 디자인의 유일한 장식. 큰 크기로만 쓴다. */
+  --t-gradient: linear-gradient(
+    100deg,
+    var(--t-orange) 0%,
+    var(--t-magenta) 52%,
+    var(--t-periwinkle) 100%
+  );
+
+  /* ── 글꼴 ─────────────────────────────────────────────────────────────
+     Inter 와 JetBrains Mono 에는 한글이 없다. 그래서 라틴 글자와 숫자는 이 둘이,
+     한글은 뒤따르는 한국어 글꼴이 맡는다 — 의도한 조합이다. */
+  --t-font-display:
+    'Inter Variable', Inter, 'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --t-font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Consolas, 'Pretendard Variable',
+    Pretendard, 'Malgun Gothic', monospace;
+
+  /* ── 글자 크기 ────────────────────────────────────────────────────────
+     디자인 문서의 데스크톱 값이 위 끝이고, 좁은 화면에서만 줄어든다.
+     교실 뒤에서 읽어야 하는 곳(게임판 HUD·실시간 순위·발표자 발표)은
+     이 값을 쓰지 않고 그 자리에서 더 크게 잡는다. */
+  --t-fs-display-xxl: clamp(34px, 5vw, 64px);
+  --t-fs-display-xl: clamp(27px, 3.2vw, 40px);
+  --t-fs-display-lg: clamp(22px, 2.1vw, 28px);
+  --t-fs-display-md: clamp(19px, 1.5vw, 22px);
+  --t-fs-body-lg: 18px;
+  --t-fs-body: 16px;
+  --t-fs-caption: 14px;
+  --t-fs-mono-button: 16px;
+  --t-fs-mono-eyebrow: 11px;
+  --t-fs-mono-caption: 10px;
+
+  /** 자간 — 음수 자간은 디스플레이 산세만. 고정폭은 양수만. 뒤집으면 틀린 것이다. */
+  --t-ls-display-xxl: -0.03em;
+  --t-ls-display-xl: -0.02em;
+  --t-ls-display-lg: -0.015em;
+  --t-ls-display-md: -0.01em;
+  --t-ls-body: -0.01em;
+  --t-ls-mono: 0.04em;
+  --t-ls-mono-eyebrow: 0.05em;
+
+  /* ── 모서리 ───────────────────────────────────────────────────────── */
+  --t-r-none: 0px;
+  --t-r-xs: 3.25px;
+  --t-r-sm: 4px; /* 기본값. 버튼·뱃지·카드·표 모두 이것. */
+  --t-r-md: 8px;
+  --t-r-full: 9999px; /* 떠 있는 동그란 버튼 하나만. */
+
+  /* ── 여백 ─────────────────────────────────────────────────────────── */
+  --t-s-xxs: 2px;
+  --t-s-xs: 4px;
+  --t-s-sm: 8px;
+  --t-s-md: 12px;
+  --t-s-lg: 16px;
+  --t-s-xl: 20px;
+  --t-s-2xl: 24px;
+  --t-s-3xl: 32px;
+  --t-s-4xl: 44px;
+  --t-s-5xl: 48px;
+  --t-s-6xl: 55.2px;
+  --t-s-section: 80px;
+
+  /** 가로 최대 너비와 좌우 여백. */
+  --t-container: 1280px;
+  --t-gutter: 32px;
+
+  /** 띄움 — 떠 있는 요소 하나에만 허용된다. 카드에는 절대 쓰지 않는다. */
+  --t-shadow-float: rgba(1, 1, 32, 0.1) 0 4px 10px 0;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --t-gutter: 16px;
+    --t-s-section: 48px;
+  }
+}
+
+/* ───────────────────────── 글자 도우미 ─────────────────────────
+   마크업에서 실제로 쓰는 것만 둔다. */
+
+/** 구역 머리말 — 대문자 고정폭. 이 디자인에서 모든 구역 위에 붙는다. */
+.t-eyebrow {
+  display: block;
+  margin: 0 0 var(--t-s-md);
+  color: var(--t-body);
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--t-ls-mono-eyebrow);
+  text-transform: uppercase;
+}
+
+/* 짙은 면 위에서는 흐린 흰색으로 바뀐다. */
+.t-on-dark .t-eyebrow,
+.t-eyebrow--on-dark {
+  color: var(--t-body-dark);
+}
+
+/** 글 안에 끼는 작은 태그 라벨. */
+.t-mono {
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--t-ls-mono);
+  text-transform: uppercase;
+}
+
+/* ───────────────────────── 그라디언트 리본 ─────────────────────────
+   이 디자인의 유일한 장식이다. 브릭픽에서는 게임의 벽돌 격자를 통해
+   그라디언트를 보여 준다 — 새 장식 체계를 만들지 않고 제품 자체를 쓴다. */
+
+.t-ribbon {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* 장식일 뿐이므로 좁은 화면에서 제목의 자리를 빼앗지 않는다. */
+  max-height: 46vh;
+}
+
+/* ───────────────────────── 바닥 워드마크 ─────────────────────────
+   페이지 맨 아래에 놓이는 거대한 글자. 배경에 거의 잠기도록 연하게 칠해
+   "여기서 끝" 이라는 표시 겸 바닥글 구분선 역할을 한다. */
+
+.t-wordmark {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--t-hairline);
+  font-family: var(--t-font-display);
+  /*
+    글자 아홉 개(brickpick)가 화면 폭을 꽉 채우도록 잡은 값이다.
+    글꼴이 아직 안 왔을 때는 폭이 달라질 수 있으므로 넘치면 잘라 낸다 —
+    이건 읽으라고 둔 글자가 아니라 "여기서 끝" 이라는 표시다.
+  */
+  font-size: max(56px, 25.5vw);
+  font-weight: 500;
+  line-height: 0.82;
+  letter-spacing: -0.045em;
+  white-space: nowrap;
+  user-select: none;
+}

@@ -196,7 +196,7 @@ describe('캡슐 생성과 획득', () => {
       d.items.brickRatio = 0 // 자동 배치는 끄고 손으로 심는다
     })
     holdServe(rig.arena)
-    const brick = keepOnly(rig.arena, 3, 5, 'sky', 'multiball')
+    const brick = keepOnly(rig.arena, 3, 5, 'mint', 'multiball')
 
     putBulletUnder(rig.arena, brick)
     rig.step(1)
@@ -210,7 +210,7 @@ describe('캡슐 생성과 획득', () => {
 
     // 같은 벽돌을 되살려 다시 부숴도 캡슐은 늘지 않는다 (itemSpawned 표시).
     brick.alive = true
-    brick.hp = BRICK_TYPES.sky.durability
+    brick.hp = BRICK_TYPES.mint.durability
     rig.arena.level.aliveCount += 1
     putBulletUnder(rig.arena, brick)
     rig.step(1)
@@ -577,17 +577,17 @@ describe('레이저', () => {
     })
     const arena = rig.arena
     holdServe(arena)
-    const brick = keepOnly(arena, 3, 5, 'silver', null) // 내구도 3
+    const brick = keepOnly(arena, 3, 5, 'pearl', null) // 내구도 3
 
     putBulletUnder(arena, brick)
     rig.step(1)
 
     expect(brick.alive).toBe(true)
-    expect(brick.hp).toBe(BRICK_TYPES.silver.durability - 1)
+    expect(brick.hp).toBe(BRICK_TYPES.pearl.durability - 1)
     expect(arena.bullets).toHaveLength(0)
     expect(rig.count('brick-hit')).toBe(1)
     expect(rig.count('brick-break')).toBe(0)
-    expect(arena.score).toBe(BRICK_TYPES.silver.hitScore)
+    expect(arena.score).toBe(BRICK_TYPES.pearl.hitScore)
   })
 
   it('레이저로 부순 벽돌도 점수가 같고 캡슐도 나온다', () => {
@@ -596,15 +596,15 @@ describe('레이저', () => {
     })
     const arena = rig.arena
     holdServe(arena)
-    const brick = keepOnly(arena, 3, 5, 'cyan', 'shield') // 내구도 1
+    const brick = keepOnly(arena, 3, 5, 'periwinkle', 'shield') // 내구도 1
 
     putBulletUnder(arena, brick)
     rig.step(1)
 
     // 점수는 점수표를 독립적으로 다시 계산한 값과 같아야 한다.
-    const expected = computeScore({ hits: [{ typeId: 'cyan', destroyed: true }], wavesCleared: 0 })
+    const expected = computeScore({ hits: [{ typeId: 'periwinkle', destroyed: true }], wavesCleared: 0 })
     expect(arena.score).toBe(expected.total)
-    expect(arena.score).toBe(BRICK_TYPES.cyan.breakScore)
+    expect(arena.score).toBe(BRICK_TYPES.periwinkle.breakScore)
     expect(arena.bricksDestroyed).toBe(1)
     expect(arena.capsules).toHaveLength(1)
     expect(arena.capsules[0].kind).toBe('shield')
@@ -805,7 +805,7 @@ describe('중복 처리 방지', () => {
     const solo = makeRig((d) => {
       d.items.brickRatio = 0
     })
-    const soloBrick = keepOnly(solo.arena, 0, 5, 'sky', 'expand')
+    const soloBrick = keepOnly(solo.arena, 0, 5, 'mint', 'expand')
     onlyMovingBall(solo.arena, soloBrick.x + soloBrick.w / 2, soloBrick.y + soloBrick.h + 5, 0, -1)
     solo.step(1)
     expect(solo.count('brick-break')).toBe(1)
@@ -817,7 +817,7 @@ describe('중복 처리 방지', () => {
     const rig = makeRig((d) => {
       d.items.brickRatio = 0
     })
-    const brick = keepOnly(rig.arena, 0, 5, 'sky', 'expand')
+    const brick = keepOnly(rig.arena, 0, 5, 'mint', 'expand')
     onlyMovingBall(rig.arena, brick.x + brick.w / 2, brick.y + brick.h + 5, 0, -1)
     putBulletUnder(rig.arena, brick)
     rig.step(1)
@@ -827,7 +827,7 @@ describe('중복 처리 방지', () => {
     expect(rig.arena.capsules).toHaveLength(1)
     expect(rig.arena.bricksDestroyed).toBe(1)
     expect(rig.arena.score).toBe(soloScore)
-    expect(rig.arena.score).toBe(BRICK_TYPES.sky.breakScore)
+    expect(rig.arena.score).toBe(BRICK_TYPES.mint.breakScore)
     expect(rig.arena.itemStats.expand.dropped).toBe(1)
   })
 })
@@ -844,7 +844,7 @@ describe('아이템 끄기', () => {
     expect(arena.level.bricks.every((b) => b.item === null)).toBe(true)
 
     // (2) 손으로 아이템을 심어 두어도 캡슐이 나오지 않는다.
-    const brick = keepOnly(arena, 3, 5, 'sky', 'multiball')
+    const brick = keepOnly(arena, 3, 5, 'mint', 'multiball')
     putBulletUnder(arena, brick)
     rig.step(1)
 

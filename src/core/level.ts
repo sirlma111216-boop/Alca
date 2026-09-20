@@ -47,7 +47,7 @@ export interface Level {
 /** 난이도에 따라 실제로 쓸 벽돌 종류를 고른다. 위 행일수록 단단하다. */
 export function brickTypesFor(maxDurability: number): BrickTypeId[] {
   const usable = BRICK_TYPE_ORDER.filter((id) => BRICK_TYPES[id].durability <= maxDurability)
-  return usable.length > 0 ? [...usable] : ['sky']
+  return usable.length > 0 ? [...usable] : ['mint']
 }
 
 /** 아이템 배치에 쓸 수 있는 종류 목록 (전체 스위치 + 개별 스위치 + 가중치 > 0). */

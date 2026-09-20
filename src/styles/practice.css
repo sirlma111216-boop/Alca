@@ -1,104 +1,161 @@
-/* 혼자 연습하기 — bp-prac- 접두사만 쓴다. */
+/*
+ * 혼자 연습하기 — bp-prac- 접두사만 쓴다.
+ *
+ * 설정·결과 화면은 흰 면, 경기 중 화면은 짙은 면이다.
+ * 색·글꼴·여백은 tokens.css 의 --t-* 만 쓴다.
+ */
 
 /* 경기 중 상단 얇은 줄. 게임판이 화면의 중심이 되도록 최소한만 둔다. */
 .bp-prac-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--bp-line, #1e2b52);
-  background: var(--bp-panel, #0b1226);
+  gap: var(--t-s-lg);
+  padding: var(--t-s-md) var(--t-gutter);
+  border-bottom: 1px solid var(--t-hairline-dark);
+  background: var(--t-canvas-dark);
+  color: var(--t-on-dark);
 }
+
 .bp-prac-top__title {
-  font-weight: 700;
-  font-size: 15px;
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--t-ls-mono-eyebrow);
+  text-transform: uppercase;
 }
+
 .bp-prac-top__meta {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
-  color: var(--bp-text-dim, #8ea0c9);
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  letter-spacing: var(--t-ls-mono);
+  text-transform: uppercase;
+  color: var(--t-body-dark);
   overflow-wrap: anywhere;
 }
+
+/* 경기 중에는 화면 전체가 짙은 면이다. */
+.bp-app--match:has(.bp-prac-top) {
+  background: var(--t-canvas-dark);
+  height: 100vh;
+  height: 100dvh;
+}
+
 .bp-prac-stage {
   flex: 1;
   min-height: 0;
 }
 
-/* 결과 카드 */
+/* 결과 카드 — 면을 뒤집어 짙게 간다. 최고 기록이면 민트로 한 번 더 뒤집는다. */
 .bp-prac-result {
-  margin: 0 0 18px;
-  padding: 22px 20px;
-  text-align: center;
-  border: 1px solid var(--bp-line, #1e2b52);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(34, 211, 238, 0.09), rgba(11, 18, 38, 0.2));
+  margin: 0 0 var(--t-s-2xl);
+  padding: var(--t-s-5xl) var(--t-s-3xl);
+  border-radius: var(--t-r-sm);
+  background: var(--t-canvas-dark);
+  color: var(--t-on-dark);
 }
+
 .bp-prac-result.is-best {
-  border-color: var(--bp-accent-warm, #fbbf24);
-  background: linear-gradient(180deg, rgba(251, 191, 36, 0.14), rgba(11, 18, 38, 0.2));
+  background: var(--t-mint);
+  color: var(--t-ink);
 }
+
 .bp-prac-result__badge {
-  margin: 0 0 6px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--bp-accent-warm, #fbbf24);
+  margin: 0 0 var(--t-s-md);
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--t-ls-mono-eyebrow);
+  text-transform: uppercase;
+  color: var(--t-ink);
 }
+
 .bp-prac-result__score {
   margin: 0;
-  font-size: clamp(30px, 8vw, 44px);
-  font-weight: 800;
-  line-height: 1.2;
+  font-family: var(--t-font-mono);
+  font-size: clamp(34px, 8vw, 56px);
+  font-weight: 500;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
 }
+
 .bp-prac-result__sub {
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: var(--bp-text-dim, #8ea0c9);
+  margin: var(--t-s-md) 0 0;
+  font-size: var(--t-fs-body);
+  color: var(--t-body-dark);
+}
+
+.bp-prac-result.is-best .bp-prac-result__sub {
+  color: var(--t-ink);
 }
 
 .bp-prac-facts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
-  margin: 18px 0 0;
-  padding: 0;
+  gap: 0;
+  margin: var(--t-s-3xl) 0 0;
+  padding: var(--t-s-lg) 0 0;
+  border-top: 1px solid var(--t-hairline-dark);
   list-style: none;
 }
+
+.bp-prac-result.is-best .bp-prac-facts {
+  border-top-color: rgba(1, 1, 32, 0.15);
+}
+
 .bp-prac-facts li {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px 8px;
-  border-radius: 10px;
-  background: rgba(17, 28, 58, 0.6);
-}
-.bp-prac-facts span {
-  font-size: 12px;
-  color: var(--bp-text-dim, #8ea0c9);
-}
-.bp-prac-facts strong {
-  font-size: 17px;
+  gap: var(--t-s-xs);
+  padding: var(--t-s-md) var(--t-s-md) var(--t-s-md) 0;
 }
 
-/* 최고 기록 */
+.bp-prac-facts span {
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--t-ls-mono-eyebrow);
+  text-transform: uppercase;
+  color: var(--t-body-dark);
+}
+
+.bp-prac-result.is-best .bp-prac-facts span {
+  color: rgba(1, 1, 32, 0.6);
+}
+
+.bp-prac-facts strong {
+  font-family: var(--t-font-mono);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* 최고 기록 줄 */
 .bp-prac-best {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
-  margin: 0 0 12px;
-}
-.bp-prac-best__label {
-  font-size: 13px;
-  color: var(--bp-text-dim, #8ea0c9);
-}
-.bp-prac-best__value {
-  font-size: 19px;
+  gap: var(--t-s-xs) var(--t-s-md);
+  margin: 0 0 var(--t-s-md);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .bp-prac-result {
-    transition: none;
-  }
+.bp-prac-best__label {
+  font-family: var(--t-font-mono);
+  font-size: var(--t-fs-mono-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--t-ls-mono-eyebrow);
+  text-transform: uppercase;
+  color: var(--t-body);
+}
+
+/*
+ * 이 값은 "1,250점" 일 때도 있지만 "42초 만에 클리어" 같은 **문장**일 때도 있다.
+ * 고정폭은 라벨 전용이므로 여기는 본문 글꼴을 쓰고, 숫자만 자리를 맞춘다.
+ */
+.bp-prac-best__value {
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--t-ls-display-md);
+  color: var(--t-ink);
 }

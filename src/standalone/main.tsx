@@ -2,8 +2,18 @@
  * 단독 실행 웹사이트의 진입점.
  *
  * 캔버스(renderer)와 CSS 가 같은 색·같은 글꼴을 쓰도록, palette.ts 의 값을
- * CSS 사용자 지정 속성으로 내려 준다. 외부 글꼴이나 외부 자원을 내려받지 않는다.
+ * CSS 사용자 지정 속성으로 내려 준다. 외부 서버로 나가는 요청은 하나도 없다.
  */
+
+/*
+ * 글꼴은 자체 호스팅이다 (@fontsource) — 외부 CDN 으로 나가는 요청이 없다.
+ * 교실 네트워크가 외부를 막아도 화면은 그대로 뜬다.
+ * Inter 와 JetBrains Mono 에는 한글이 없어서, 라틴 글자와 숫자만 이 둘이 맡고
+ * 한글은 뒤따르는 한국어 글꼴이 맡는다 — 의도한 조합이다.
+ */
+import '@fontsource-variable/inter/wght.css'
+import '@fontsource/jetbrains-mono/latin-400.css'
+import '@fontsource/jetbrains-mono/latin-500.css'
 
 import { createRoot } from 'react-dom/client'
 import { App } from './App'

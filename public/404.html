@@ -6,91 +6,195 @@
     <meta name="robots" content="noindex" />
     <title>페이지를 찾을 수 없습니다 — 브릭픽</title>
     <style>
+      /*
+        이 파일은 정적으로 통째로 나간다 — 사이트의 CSS 를 불러오지 않는다.
+        그래서 디자인 토큰을 여기 한 번 더 적어 둔다. tokens.css 와 같은 값이다.
+      */
       :root {
-        color-scheme: dark;
-        --bg: #070b18;
-        --panel: #0b1226;
-        --line: #1e2b52;
-        --text: #e8edff;
-        --dim: #8ea0c9;
-        --accent: #22d3ee;
+        color-scheme: light;
+        --ink: #000000;
+        --canvas: #ffffff;
+        --canvas-dark: #010120;
+        --body: #959494;
+        --hairline: #ebebeb;
+        --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+        --display:
+          'Inter Variable', Inter, 'Pretendard Variable', Pretendard, 'Noto Sans KR',
+          'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: center;
-        padding: 24px 16px;
-        background: var(--bg);
-        color: var(--text);
-        font-family: Pretendard, 'Noto Sans KR', 'Malgun Gothic', -apple-system,
-          BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        line-height: 1.7;
+        display: flex;
+        flex-direction: column;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--display);
+        font-size: 16px;
+        line-height: 1.55;
+        letter-spacing: -0.01em;
+      }
+      /* 짙은 띠 — 사이트의 머리띠와 같은 면이다. */
+      header {
+        background: var(--canvas-dark);
+        color: #ffffff;
+        padding: 16px 32px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .bricks {
+        display: inline-flex;
+        gap: 3px;
+        align-items: flex-end;
+      }
+      .bricks span {
+        display: block;
+        width: 9px;
+        border-radius: 2px;
+      }
+      .name {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .name-en {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.68);
+        margin-left: 4px;
       }
       main {
+        flex: 1 1 auto;
         width: 100%;
-        max-width: 480px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 32px 28px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 80px 32px;
       }
-      .code {
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        font-size: 13px;
-        letter-spacing: 0.18em;
-        color: var(--accent);
-        margin: 0 0 8px;
+      .eyebrow {
+        display: block;
+        margin: 0 0 12px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--body);
       }
-      h1 { font-size: 22px; margin: 0 0 12px; }
-      p { margin: 0 0 16px; color: var(--dim); font-size: 15px; }
-      ul { margin: 0 0 20px; padding-left: 20px; color: var(--dim); font-size: 15px; }
-      li { margin-bottom: 6px; }
+      h1 {
+        margin: 0;
+        max-width: 18ch;
+        font-size: clamp(34px, 5vw, 64px);
+        font-weight: 500;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+      }
+      p {
+        margin: 16px 0 0;
+        max-width: 62ch;
+        color: var(--body);
+        font-size: 18px;
+      }
+      ul {
+        margin: 32px 0 0;
+        padding: 0;
+        list-style: none;
+        max-width: 62ch;
+      }
+      li {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 16px;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--hairline);
+      }
+      li span {
+        color: var(--body);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding-top: 3px;
+      }
       code {
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-        background: #111c3a;
-        border-radius: 5px;
-        padding: 2px 6px;
-        font-size: 13px;
-        color: var(--text);
+        font-family: var(--mono);
+        font-size: 14px;
       }
       a.home {
-        display: inline-block;
-        background: var(--accent);
-        color: #06121c;
-        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 32px;
+        min-height: 44px;
+        padding: 12px 24px;
+        border-radius: 4px;
+        background: var(--ink);
+        color: var(--canvas);
+        font-family: var(--mono);
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         text-decoration: none;
-        padding: 11px 20px;
-        border-radius: 10px;
       }
-      a.home:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
-      .bricks { display: flex; gap: 4px; margin-bottom: 20px; }
-      .bricks span {
-        height: 12px;
-        flex: 1;
-        border-radius: 2px;
-        border-top: 2px solid rgba(255, 255, 255, 0.28);
+      a.home:focus-visible {
+        outline: 2px solid var(--ink);
+        outline-offset: 2px;
+      }
+      /* 바닥 워드마크 — 배경에 거의 잠기도록 연하게. */
+      .wordmark {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        color: var(--hairline);
+        font-size: clamp(56px, 19vw, 260px);
+        font-weight: 500;
+        line-height: 0.82;
+        letter-spacing: -0.045em;
+        white-space: nowrap;
+        user-select: none;
+      }
+      @media (max-width: 767px) {
+        header,
+        main {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        main {
+          padding-top: 48px;
+          padding-bottom: 48px;
+        }
       }
     </style>
   </head>
   <body>
+    <header>
+      <span class="bricks" aria-hidden="true">
+        <span style="background: #fc4c02; height: 13px"></span>
+        <span style="background: #ef2cc1; height: 17px"></span>
+        <span style="background: #bdbbff; height: 10px"></span>
+      </span>
+      <span class="name">브릭픽 <span class="name-en">BrickPick</span></span>
+    </header>
+
     <main>
-      <div class="bricks" aria-hidden="true">
-        <span style="background:#38bdf8"></span>
-        <span style="background:#22d3ee"></span>
-        <span style="background:#e879f9"></span>
-        <span style="background:#fbbf24"></span>
-        <span style="background:#cbd5e1"></span>
-      </div>
-      <p class="code">404</p>
+      <span class="eyebrow">오류 404</span>
       <h1>이 주소에는 아무것도 없습니다</h1>
       <p>주소를 잘못 입력했거나, 링크가 오래된 것일 수 있습니다.</p>
       <ul>
-        <li>게임 화면은 <code>/</code> 입니다.</li>
-        <li>수업 앱에 삽입하는 임베드 주소는 <code>/embed/</code> 입니다.</li>
+        <li><span>게임 화면</span> <code>/</code></li>
+        <li><span>수업 앱에 삽입하는 임베드 주소</span> <code>/embed/</code></li>
+        <li><span>혼자 연습하기</span> <code>/?practice=1</code></li>
       </ul>
       <a class="home" href="/">게임 화면으로 가기</a>
     </main>
+
+    <p class="wordmark" aria-hidden="true">brickpick</p>
   </body>
 </html>

@@ -9,6 +9,16 @@
  * 그만큼 첫 화면이 빨리 뜬다.
  */
 
+/*
+ * 글꼴은 자체 호스팅이다 (@fontsource) — 외부 CDN 으로 나가는 요청이 없다.
+ * 교실 네트워크가 외부를 막아도 화면은 그대로 뜬다.
+ * Inter 와 JetBrains Mono 에는 한글이 없어서, 라틴 글자와 숫자만 이 둘이 맡고
+ * 한글은 뒤따르는 한국어 글꼴이 맡는다 — 의도한 조합이다.
+ */
+import '@fontsource-variable/inter/wght.css'
+import '@fontsource/jetbrains-mono/latin-400.css'
+import '@fontsource/jetbrains-mono/latin-500.css'
+
 import { startEmbedHost } from '../adapters/iframe/embed-host'
 import type { EmbedHost } from '../adapters/iframe/embed-host'
 import '../styles/brickpick.css'

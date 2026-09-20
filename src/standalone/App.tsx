@@ -7,6 +7,7 @@
 
 import { useState } from 'react'
 import { LiveRegion } from './components/Callout'
+import { GradientRibbon, WordmarkBanner } from './components/Ribbon'
 import { Stepper } from './components/Stepper'
 import { Toggle } from './components/Toggle'
 import { MatchScreen } from './screens/MatchScreen'
@@ -37,6 +38,8 @@ export function App() {
   const { state, dispatch, names } = useStandaloneStore()
   const [appMode, setAppMode] = useState<AppMode>(initialAppMode)
   const inMatch = state.screen === 'match'
+  /** 첫 화면에서만 큰 머리말(제목 + 리본)을 편다. 그 다음부터는 얇은 띠로 줄인다. */
+  const isFront = state.screen === 'participants'
 
   /** 모드를 벗어날 때 주소의 ?code= 를 지운다 — 새로고침하면 또 학생 화면으로 가 버린다. */
   const backToSolo = (): void => {
@@ -107,64 +110,79 @@ export function App() {
 
   return (
     <div className="bp-app">
-      <header className="bp-top">
-        <div className="bp-top__brand">
-          <span className="bp-top__logo" aria-hidden="true">
-            <span className="bp-top__brick" />
-            <span className="bp-top__brick" />
-            <span className="bp-top__brick" />
-          </span>
-          <span className="bp-top__name">
-            브릭픽 <span className="bp-top__name-en">BrickPick</span>
-          </span>
+      <header className={`bp-band bp-band--dark bp-top${isFront ? '' : ' bp-top--bar'}`}>
+        <div className="bp-top__row">
+          <div className="bp-top__brand">
+            <span className="bp-top__logo" aria-hidden="true">
+              <span className="bp-top__brick" />
+              <span className="bp-top__brick" />
+              <span className="bp-top__brick" />
+            </span>
+            <span className="bp-top__name">
+              브릭픽 <span className="bp-top__name-en">BrickPick</span>
+            </span>
+          </div>
+          <p className="bp-top__tagline">수업용 벽돌깨기 발표자 선정</p>
         </div>
-        <p className="bp-top__tagline">수업용 벽돌깨기 발표자 선정</p>
+
+        {isFront ? (
+          <div className="bp-hero">
+            <div className="bp-hero__copy">
+              <span className="t-eyebrow">수업용 발표자 선정</span>
+              <h1 className="bp-hero__title">벽돌을 깨서 이번 발표자를 정합니다</h1>
+              <p className="bp-hero__lead">
+                이름만 붙여 넣으면 됩니다. 명단과 결과는 이 기기 밖으로 나가지 않습니다.
+              </p>
+
+              <section className="bp-modepick" aria-label="진행 방식 고르기">
+                <p className="bp-modepick__lead">
+                  <strong>학생들이 자기 폰으로 참여</strong>하게 할 수도 있습니다.
+                </p>
+                <div className="bp-modepick__row">
+                  <button
+                    type="button"
+                    className="bpx-btn bpx-btn--mint"
+                    onClick={() => setAppMode('host')}
+                  >
+                    학생 폰으로 참여 →
+                  </button>
+                  <button type="button" className="bpx-btn" onClick={() => setAppMode('student')}>
+                    나는 학생입니다
+                  </button>
+                  <button type="button" className="bpx-btn" onClick={() => setAppMode('practice')}>
+                    혼자 연습하기
+                  </button>
+                </div>
+                <p className="bp-modepick__note">
+                  <strong>혼자 연습하기</strong>는 설정 없이 바로 한 판 하는 것입니다 — 발표자를
+                  뽑지 않습니다.
+                  <br />
+                  아래 방식은 <strong>교사 기기 한 대</strong>로 끝냅니다 — 닉네임을 직접 입력하고
+                  자동 경기로 뽑거나, 한 명씩 차례로 플레이합니다. 인터넷 연결이 없어도 됩니다.
+                </p>
+              </section>
+            </div>
+            <div className="bp-hero__art">
+              <GradientRibbon />
+            </div>
+          </div>
+        ) : null}
       </header>
 
-      {state.screen === 'participants' ? (
-        <section className="bp-modepick" aria-label="진행 방식 고르기">
-          <p className="bp-modepick__lead">
-            <strong>학생들이 자기 폰으로 참여</strong>하게 할 수도 있습니다.
-          </p>
-          <div className="bp-modepick__row">
-            <button type="button" className="bpx-btn" onClick={() => setAppMode('host')}>
-              학생 폰으로 참여 →
-            </button>
-            <button
-              type="button"
-              className="bpx-btn bpx-btn--ghost"
-              onClick={() => setAppMode('student')}
-            >
-              나는 학생입니다 (수업 코드 입력)
-            </button>
-            <button
-              type="button"
-              className="bpx-btn bpx-btn--ghost"
-              onClick={() => setAppMode('practice')}
-            >
-              혼자 연습하기
-            </button>
-          </div>
-          <p className="bp-modepick__note">
-            <strong>혼자 연습하기</strong>는 설정 없이 바로 한 판 하는 것입니다 — 발표자를 뽑지
-            않습니다.
-            <br />
-            아래 방식은 <strong>교사 기기 한 대</strong>로 끝냅니다 — 닉네임을 직접 입력하고
-            자동 경기로 뽑거나, 한 명씩 차례로 플레이합니다. 인터넷 연결이 없어도 됩니다.
-          </p>
-        </section>
-      ) : null}
+      <div className="bp-band bp-band--steps">
+        <Stepper current={state.screen} onJump={(screen) => dispatch({ type: 'goto', screen })} />
+      </div>
 
-      <Stepper current={state.screen} onJump={(screen) => dispatch({ type: 'goto', screen })} />
+      <div className="bp-band bp-band--live">
+        <LiveRegion
+          notice={state.notice}
+          error={state.error}
+          onDismissNotice={() => dispatch({ type: 'notice', text: null })}
+          onDismissError={() => dispatch({ type: 'error', text: null })}
+        />
+      </div>
 
-      <LiveRegion
-        notice={state.notice}
-        error={state.error}
-        onDismissNotice={() => dispatch({ type: 'notice', text: null })}
-        onDismissError={() => dispatch({ type: 'error', text: null })}
-      />
-
-      <main className="bp-main">
+      <main className="bp-band bp-main">
         {state.screen === 'participants' ? (
           <ParticipantsScreen state={state} dispatch={dispatch} />
         ) : null}
@@ -192,7 +210,7 @@ export function App() {
         ) : null}
       </main>
 
-      <footer className="bp-bottom">
+      <footer className="bp-band bp-bottom">
         <details className="bp-prefs">
           <summary className="bp-prefs__summary">화면·소리 설정</summary>
           <div className="bp-prefs__body">
@@ -240,6 +258,7 @@ export function App() {
           <strong>학생 폰으로 참여</strong>를 쓸 때만 서버에 연결합니다. 그때 올라가는 것은 학생이
           정한 별명과 점수뿐이고(실명·학번은 올라가지 않습니다), 8일 뒤 자동으로 사라집니다.
         </p>
+        <WordmarkBanner />
       </footer>
     </div>
   )

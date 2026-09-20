@@ -5,59 +5,70 @@
  * 현대적으로 해석한 것이다. 원작의 로고·스프라이트·음악·효과음은 쓰지 않았고
  * 전부 코드로 그리고 합성한다.
  *
+ * 색은 `src/styles/tokens.css` 의 디자인 토큰과 같은 값이다 — 짙은 남색 면 위에
+ * 주황→자홍→연보라 그라디언트와 민트만 쓴다. 다섯 번째 강조색을 만들지 않는다.
+ * 그래서 벽돌 벽 자체가 이 디자인의 그라디언트를 보여 주는 자리가 된다.
+ *
  * 교실 프로젝터 기준으로 닉네임·순위·남은 시간이 읽혀야 하므로
  * 배경과 글자의 명도 차를 크게 잡았다.
  */
 
 export const PALETTE = {
-  /** 경기장 바깥 배경 — 짙은 네이비. */
-  background: '#070b18',
-  /** 경기장 안쪽 바닥. */
-  arenaBackground: '#0b1226',
+  /** 경기장 바깥 배경 — 디자인의 짙은 면 그대로. */
+  background: '#010120',
+  /** 경기장 안쪽 바닥. 바깥과 같은 면이고, 경계는 1px 선으로만 긋는다. */
+  arenaBackground: '#010120',
   /** 경기장 안쪽 미세 격자. */
-  arenaGrid: '#111c3a',
-  /** 금속 벽. */
-  wall: '#1e2b52',
-  wallHighlight: '#3b4d84',
-  /** 패들 — 금속성. */
-  paddle: '#cbd5f5',
-  paddleEdge: '#7c8fd6',
-  paddleCore: '#e8edff',
+  arenaGrid: '#12122f',
+  /** 금속 벽 — 짙은 면 위의 1px 선 색과 그보다 한 단계 밝은 면. */
+  wall: '#26263a',
+  wallHighlight: '#313641',
+  /** 패들 — 연보라 금속. */
+  paddle: '#bdbbff',
+  paddleEdge: '#6f6dc7',
+  paddleCore: '#ffffff',
   /** 레이저 패들일 때의 총구. */
-  paddleLaser: '#f87171',
+  paddleLaser: '#fc4c02',
   /** 캐치 패들일 때의 접착면. */
-  paddleCatch: '#38bdf8',
-  /** 공. */
-  ball: '#fdfdff',
-  ballTrail: '#7dd3fc',
+  paddleCatch: '#c8f6f9',
+  /** 공 — 화면에서 가장 밝다. 어떤 벽돌보다도 밝아야 눈이 놓치지 않는다. */
+  ball: '#ffffff',
+  ballTrail: '#c8f6f9',
   /** 바닥 보호막. */
-  shield: '#facc15',
+  shield: '#c8f6f9',
   /** 레이저 탄환. */
-  bullet: '#fca5a5',
+  bullet: '#fc4c02',
   /** 글자. */
-  text: '#e8edff',
-  textDim: '#8ea0c9',
+  text: '#ffffff',
+  textDim: 'rgba(255, 255, 255, 0.68)',
   textStrong: '#ffffff',
-  /** 강조 — 발표자, 현재 순위 등. */
-  accent: '#22d3ee',
-  accentWarm: '#fbbf24',
-  accentPink: '#e879f9',
-  danger: '#f87171',
-  ok: '#4ade80',
+  /**
+   * 강조 — 발표자, 현재 순위 등.
+   * 이 디자인에는 성공/경고/오류 색이 따로 없다. 그래서 상태는 글자·기호·번호가 말하고,
+   * 색은 거들기만 한다 (원래 프로젝트 규칙과 같은 방향이다).
+   */
+  accent: '#c8f6f9',
+  accentWarm: '#fc4c02',
+  accentPink: '#ef2cc1',
+  danger: '#fc4c02',
+  ok: '#c8f6f9',
   /** 아이템이 든 벽돌에 찍는 작은 문양 색. */
-  itemMark: '#0b1226',
+  itemMark: '#010120',
 } as const
 
-/** 선택한 참가자를 구분하는 색. 색만으로 구분하지 않도록 번호·이름을 항상 함께 그린다. */
+/**
+ * 선택한 참가자를 구분하는 색. 색만으로 구분하지 않도록 번호·이름을 항상 함께 그린다.
+ * 전부 브랜드 그라디언트(주황→자홍→연보라) 위에서 고른 점이다 — 새 색을 더하지 않는다.
+ */
 export const PARTICIPANT_ACCENTS: readonly string[] = [
-  '#22d3ee',
-  '#e879f9',
-  '#fbbf24',
-  '#4ade80',
-  '#60a5fa',
-  '#fb923c',
-  '#a78bfa',
-  '#f472b6',
+  '#fc4c02',
+  '#f53a6d',
+  '#ef2cc1',
+  '#db65da',
+  '#bdbbff',
+  '#c8f6f9',
+  '#f131a2',
+  '#cc90ec',
 ]
 
 export function participantAccent(index: number): string {
@@ -65,15 +76,18 @@ export function participantAccent(index: number): string {
 }
 
 /**
- * 글꼴.
- * 한글은 가독성이 좋은 산세리프를 쓰고, 픽셀풍 느낌은 제목과 숫자에만 제한적으로 준다
- * (자간·굵기·모서리로 표현하며 픽셀 글꼴 파일을 내려받지 않는다).
+ * 글꼴 — tokens.css 의 두 글꼴과 같은 스택이다.
+ *
+ * Inter 와 JetBrains Mono 에는 한글이 없다. 라틴 글자와 숫자는 이 둘이 맡고
+ * 한글은 뒤따르는 한국어 글꼴이 맡는다 — 의도한 조합이다.
+ * 글꼴 파일이 아직 안 왔거나 (수업 앱 안에 들어간 경우처럼) 아예 없어도
+ * 뒤의 시스템 글꼴로 그대로 그려진다.
  */
 export const FONTS = {
-  ui: "'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+  ui: "'Inter Variable', Inter, 'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
   /** 점수·시간 같은 숫자. 고정폭이라 자리수가 흔들리지 않는다. */
   numeric:
-    "'DM Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace",
+    "'JetBrains Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace",
 } as const
 
 /** 벽돌 하나를 그릴 때 쓰는 색 3종 (입체감용). */
@@ -118,5 +132,5 @@ function hexToRgb(hex: string): [number, number, number] | null {
 export function damagedShade(base: string, hp: number, maxHp: number): string {
   if (maxHp <= 1 || hp >= maxHp) return base
   const ratio = hp / maxHp
-  return mix(base, '#0b1226', (1 - ratio) * 0.45)
+  return mix(base, '#010120', (1 - ratio) * 0.45)
 }

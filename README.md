@@ -229,6 +229,7 @@ import 'brickpick/style.css'
 | [docs/protocol.md](docs/protocol.md) | 데이터 타입, 메시지 순서, 오류 처리, 실시간 프로토콜(8절) |
 | [docs/deployment.md](docs/deployment.md) | Cloudflare Workers / Pages / Netlify 배포와 도메인 연결 |
 | [docs/game-rules.md](docs/game-rules.md) | 점수·난이도·아이템·순위·동점 규칙 |
+| [docs/design.md](docs/design.md) | 화면 디자인 언어 — 색·글자·면·모양 |
 | [docs/claude-code-handoff.md](docs/claude-code-handoff.md) | 다른 수업 앱에서 연동할 때 읽을 인수인계 문서 |
 
 실행 가능한 예제: [`examples/html-host`](examples/html-host) (순수 HTML + iframe),

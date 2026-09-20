@@ -17,17 +17,19 @@
       /*
         임베드 페이지 자체의 최소 뼈대.
         게임 화면 스타일(bp-*)은 src/styles/brickpick.css 가 담당한다.
+        게임 화면은 언제나 짙은 면이므로 여기도 같은 면으로 시작한다.
       */
       html,
       body {
         margin: 0;
         padding: 0;
         height: 100%;
-        background: #070b18;
-        color: #e8edff;
+        background: #010120;
+        color: #ffffff;
         font-family:
-          'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic',
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+          'Inter Variable', Inter, 'Pretendard Variable', Pretendard, 'Noto Sans KR',
+          'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        letter-spacing: -0.01em;
         overscroll-behavior: none;
       }
 
@@ -39,7 +41,7 @@
 
       #bp-noscript {
         display: block;
-        padding: 24px;
+        padding: 32px;
         font-size: 16px;
         line-height: 1.6;
       }

@@ -95,7 +95,7 @@ export const SHIELD_Y = ARENA.height - 7
 // 점수표
 // ────────────────────────────────────────────────────────────────────────────
 
-export type BrickTypeId = 'sky' | 'cyan' | 'magenta' | 'amber' | 'silver'
+export type BrickTypeId = 'mint' | 'periwinkle' | 'magenta' | 'orange' | 'pearl'
 
 export interface BrickTypeDef {
   id: BrickTypeId
@@ -111,31 +111,61 @@ export interface BrickTypeDef {
   color: string
 }
 
-/** 벽돌 종류와 점수. 경기 전 "규칙 요약" 화면에 그대로 표시된다. */
+/**
+ * 벽돌 종류와 점수. 경기 전 "규칙 요약" 화면에 그대로 표시된다.
+ *
+ * 색은 디자인의 3색 그라디언트(주황→자홍→연보라)와 민트에서 온다.
+ * 그래서 쌓인 벽돌 벽 자체가 이 디자인의 장식 역할을 한다 — 장식을 따로 만들지 않았다.
+ * 맨 윗줄만 그라디언트 밖의 은백인데, 가장 단단한 줄이 가장 밝아야 눈에 먼저 들어오기 때문이다.
+ * (은백은 새 강조색이 아니라 무채색이다.)
+ */
 export const BRICK_TYPES: Record<BrickTypeId, BrickTypeDef> = {
-  sky: { id: 'sky', label: '하늘', durability: 1, hitScore: 0, breakScore: 10, color: '#38bdf8' },
-  cyan: { id: 'cyan', label: '청록', durability: 1, hitScore: 0, breakScore: 20, color: '#22d3ee' },
+  mint: { id: 'mint', label: '민트', durability: 1, hitScore: 0, breakScore: 10, color: '#c8f6f9' },
+  periwinkle: {
+    id: 'periwinkle',
+    label: '연보라',
+    durability: 1,
+    hitScore: 0,
+    breakScore: 20,
+    color: '#bdbbff',
+  },
   magenta: {
     id: 'magenta',
     label: '자홍',
     durability: 2,
     hitScore: 5,
     breakScore: 40,
-    color: '#e879f9',
+    color: '#ef2cc1',
   },
-  amber: { id: 'amber', label: '노랑', durability: 2, hitScore: 5, breakScore: 50, color: '#fbbf24' },
-  silver: {
-    id: 'silver',
-    label: '은색',
+  orange: {
+    id: 'orange',
+    label: '주황',
+    durability: 2,
+    hitScore: 5,
+    breakScore: 50,
+    color: '#fc4c02',
+  },
+  pearl: {
+    id: 'pearl',
+    label: '은백',
     durability: 3,
     hitScore: 5,
     breakScore: 80,
-    color: '#cbd5e1',
+    color: '#e9e9f7',
   },
 }
 
-/** 위 행일수록 단단하다. 난이도의 maxBrickDurability 로 잘라 쓴다. */
-export const BRICK_TYPE_ORDER: readonly BrickTypeId[] = ['silver', 'amber', 'magenta', 'cyan', 'sky']
+/**
+ * 위 행일수록 단단하다. 난이도의 maxBrickDurability 로 잘라 쓴다.
+ * 위에서 아래로 은백 → 주황 → 자홍 → 연보라 → 민트 — 가운데 셋이 그라디언트 순서 그대로다.
+ */
+export const BRICK_TYPE_ORDER: readonly BrickTypeId[] = [
+  'pearl',
+  'orange',
+  'magenta',
+  'periwinkle',
+  'mint',
+]
 
 /** 한 판(웨이브)의 벽돌을 전부 부쉈을 때 주는 보너스. */
 export const WAVE_CLEAR_BONUS = 500
@@ -169,7 +199,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'expand',
     label: '패들 확장',
     glyph: 'E',
-    color: '#4ade80',
+    color: '#c8f6f9',
     description: '패들이 1.5배 넓어집니다.',
     timed: true,
   },
@@ -177,7 +207,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'catch',
     label: '캐치',
     glyph: 'C',
-    color: '#38bdf8',
+    color: '#bdbbff',
     description: '공이 패들에 붙습니다. 원하는 순간에 발사하세요.',
     timed: true,
   },
@@ -185,7 +215,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'multiball',
     label: '멀티볼',
     glyph: 'M',
-    color: '#e879f9',
+    color: '#ef2cc1',
     description: '공이 갈라집니다. 최대 3개.',
     timed: false,
   },
@@ -193,7 +223,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'slow',
     label: '슬로우',
     glyph: 'S',
-    color: '#a78bfa',
+    color: '#cc90ec',
     description: '공이 느려집니다.',
     timed: true,
   },
@@ -201,7 +231,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'laser',
     label: '레이저',
     glyph: 'L',
-    color: '#f87171',
+    color: '#fc4c02',
     description: '패들 양쪽에서 탄환을 쏩니다.',
     timed: true,
   },
@@ -209,7 +239,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'shield',
     label: '보호막',
     glyph: 'B',
-    color: '#facc15',
+    color: '#f131a2',
     description: '바닥으로 떨어지는 공을 한 번 튕겨 올립니다.',
     timed: false,
   },
@@ -217,7 +247,7 @@ export const ITEM_DEFS: Record<ItemKind, ItemDef> = {
     kind: 'life',
     label: '추가 목숨',
     glyph: '+',
-    color: '#fb923c',
+    color: '#f53a6d',
     description: '목숨이 1개 늘어납니다.',
     timed: false,
   },

@@ -54,22 +54,22 @@ describe('computeScore — 점수표와 일치한다', () => {
 
   it('여러 종류를 섞어도 표를 그대로 합산한 값이 나온다', () => {
     const hits = [
-      { typeId: 'sky' as BrickTypeId, destroyed: true },
-      { typeId: 'cyan' as BrickTypeId, destroyed: true },
+      { typeId: 'mint' as BrickTypeId, destroyed: true },
+      { typeId: 'periwinkle' as BrickTypeId, destroyed: true },
       { typeId: 'magenta' as BrickTypeId, destroyed: false },
       { typeId: 'magenta' as BrickTypeId, destroyed: true },
-      { typeId: 'silver' as BrickTypeId, destroyed: false },
-      { typeId: 'silver' as BrickTypeId, destroyed: false },
-      { typeId: 'silver' as BrickTypeId, destroyed: true },
+      { typeId: 'pearl' as BrickTypeId, destroyed: false },
+      { typeId: 'pearl' as BrickTypeId, destroyed: false },
+      { typeId: 'pearl' as BrickTypeId, destroyed: true },
     ]
     // 표를 손으로 다시 읽어 계산한다 — 구현을 베끼지 않는다.
     const expected =
-      BRICK_TYPES.sky.breakScore +
-      BRICK_TYPES.cyan.breakScore +
+      BRICK_TYPES.mint.breakScore +
+      BRICK_TYPES.periwinkle.breakScore +
       BRICK_TYPES.magenta.hitScore +
       BRICK_TYPES.magenta.breakScore +
-      BRICK_TYPES.silver.hitScore * 2 +
-      BRICK_TYPES.silver.breakScore
+      BRICK_TYPES.pearl.hitScore * 2 +
+      BRICK_TYPES.pearl.breakScore
 
     const out = computeScore({ hits, wavesCleared: 0 })
     expect(out.total).toBe(expected)
@@ -88,9 +88,9 @@ describe('computeScore — 점수표와 일치한다', () => {
 
   it('아이템 획득 자체에는 점수가 없다', () => {
     expect(ITEM_PICKUP_SCORE).toBe(0)
-    const without = computeScore({ hits: [{ typeId: 'sky', destroyed: true }], wavesCleared: 1 })
+    const without = computeScore({ hits: [{ typeId: 'mint', destroyed: true }], wavesCleared: 1 })
     const with20 = computeScore({
-      hits: [{ typeId: 'sky', destroyed: true }],
+      hits: [{ typeId: 'mint', destroyed: true }],
       wavesCleared: 1,
       itemsCollected: 20,
     })
@@ -112,7 +112,7 @@ describe('scoreTable — 난이도에 맞는 행만 낸다', () => {
   })
 
   it('내구도 1 이면 1타에 깨지는 벽돌만, 3 이면 전부 나온다', () => {
-    expect(scoreTable(1).map((r) => r.label)).toEqual([BRICK_TYPES.sky.label, BRICK_TYPES.cyan.label])
+    expect(scoreTable(1).map((r) => r.label)).toEqual([BRICK_TYPES.mint.label, BRICK_TYPES.periwinkle.label])
     expect(scoreTable(3)).toHaveLength(ALL_TYPES.length)
   })
 
