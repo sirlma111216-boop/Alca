@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: 소스 내려받기
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Node 준비 (.nvmrc 의 버전을 그대로 쓴다)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
           # npm 캐시를 재사용해 설치 시간을 줄인다. package-lock.json 이 기준이다.
@@ -59,7 +59,7 @@ jobs:
 
       - name: 빌드 결과 올려 두기 (실패했을 때 무엇이 나왔는지 확인용)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: brickpick-build
           path: |
@@ -86,8 +86,8 @@ jobs:
 #    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 #    runs-on: ubuntu-latest
 #    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-node@v4
+#      - uses: actions/checkout@v5
+#      - uses: actions/setup-node@v5
 #        with:
 #          node-version-file: '.nvmrc'
 #          cache: 'npm'
