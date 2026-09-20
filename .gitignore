@@ -1,0 +1,26 @@
+# 의존성
+node_modules/
+
+# 빌드 산출물
+dist/
+dist-lib/
+dist-pack/
+*.tgz
+
+# Cloudflare wrangler 작업 폴더
+.wrangler/
+
+# 로컬 환경변수 (템플릿 .env.example 는 커밋한다)
+.env*.local
+
+# 예제 호스트 앱
+examples/*/node_modules/
+examples/*/dist/
+
+# 테스트 커버리지
+coverage/
+
+# 편집기·OS 찌꺼기
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,343 @@
+{
+  "schemaVersion": "1.0",
+  "sessionId": "lesson-2026-09-20-3교시:activity-7",
+  "resultId": "bpr_1d0sk85_47126",
+  "engineVersion": "1.0.0",
+  "seed": "KX7M2PQR4T",
+  "appliedSettings": {
+    "mode": "auto",
+    "difficulty": "normal",
+    "difficultySettings": {
+      "ballBaseSpeed": 300,
+      "ballMaxSpeed": 440,
+      "ballAccelPerMinute": 0.4,
+      "paddleWidth": 56,
+      "paddleMaxWidth": 112,
+      "lives": 3,
+      "brickRows": 7,
+      "maxBrickDurability": 3,
+      "manualEdgeForgiveness": 2,
+      "autoReactionMs": 120,
+      "autoAimErrorSigma": 0.42,
+      "autoMissChance": 0.08,
+      "autoPaddleSpeed": 400,
+      "items": {
+        "enabled": true,
+        "enabledKinds": {
+          "expand": true,
+          "catch": true,
+          "multiball": true,
+          "slow": true,
+          "laser": true,
+          "shield": true,
+          "life": true
+        },
+        "weights": {
+          "expand": 22,
+          "catch": 14,
+          "multiball": 16,
+          "slow": 14,
+          "laser": 16,
+          "shield": 10,
+          "life": 8
+        },
+        "brickRatio": 0.26,
+        "capsuleSpeed": 90,
+        "expandFactor": 1.5,
+        "expandDurationMs": 12000,
+        "catchDurationMs": 12000,
+        "catchHoldMs": 3000,
+        "slowDurationMs": 8000,
+        "slowFactor": 0.75,
+        "laserDurationMs": 8000,
+        "laserIntervalMs": 340,
+        "maxBalls": 3,
+        "maxShieldCharges": 1,
+        "maxLives": 5
+      }
+    },
+    "roundDurationMs": 30000,
+    "selectionRule": {
+      "kind": "ranks",
+      "ranks": [
+        3
+      ]
+    },
+    "excludedParticipantIds": [
+      "stu_c3d4"
+    ]
+  },
+  "startedAt": "2026-09-20T02:15:30.000Z",
+  "completedAt": "2026-09-20T02:15:30.000Z",
+  "participants": [
+    {
+      "id": "stu_k1l2",
+      "nickname": "김민준",
+      "score": 240,
+      "rank": 1,
+      "eligibleRank": 1,
+      "excluded": false,
+      "playStatus": "played",
+      "livesRemaining": 3,
+      "bricksDestroyed": 15,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "items": [
+        {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "slow",
+          "dropped": 2,
+          "collected": 0
+        },
+        {
+          "kind": "shield",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "life",
+          "dropped": 1,
+          "collected": 1
+        }
+      ],
+      "tie": {
+        "tied": false,
+        "tiedWith": [],
+        "resolvedBy": "none"
+      }
+    },
+    {
+      "id": "stu_e5f6",
+      "nickname": "박도윤",
+      "score": 210,
+      "rank": 2,
+      "eligibleRank": 2,
+      "excluded": false,
+      "playStatus": "played",
+      "livesRemaining": 3,
+      "bricksDestroyed": 15,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "items": [
+        {
+          "kind": "expand",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "slow",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "shield",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "life",
+          "dropped": 1,
+          "collected": 1
+        }
+      ],
+      "tie": {
+        "tied": false,
+        "tiedWith": [],
+        "resolvedBy": "none"
+      }
+    },
+    {
+      "id": "stu_a1b2",
+      "nickname": "김민준",
+      "score": 175,
+      "rank": 3,
+      "eligibleRank": 3,
+      "excluded": false,
+      "playStatus": "played",
+      "livesRemaining": 3,
+      "bricksDestroyed": 12,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "items": [
+        {
+          "kind": "shield",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "life",
+          "dropped": 1,
+          "collected": 0
+        }
+      ],
+      "tie": {
+        "tied": false,
+        "tiedWith": [],
+        "resolvedBy": "none"
+      }
+    },
+    {
+      "id": "stu_c3d4",
+      "nickname": "이서연",
+      "score": 165,
+      "rank": 4,
+      "eligibleRank": null,
+      "excluded": true,
+      "playStatus": "played",
+      "livesRemaining": 4,
+      "bricksDestroyed": 11,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "items": [
+        {
+          "kind": "expand",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "slow",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "shield",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "life",
+          "dropped": 2,
+          "collected": 1
+        }
+      ],
+      "tie": {
+        "tied": true,
+        "tiedWith": [
+          "stu_c3d4",
+          "stu_i9j0"
+        ],
+        "resolvedBy": "lives"
+      }
+    },
+    {
+      "id": "stu_i9j0",
+      "nickname": "정하은",
+      "score": 165,
+      "rank": 5,
+      "eligibleRank": 4,
+      "excluded": false,
+      "playStatus": "played",
+      "livesRemaining": 1,
+      "bricksDestroyed": 12,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "items": [
+        {
+          "kind": "expand",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "slow",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "shield",
+          "dropped": 1,
+          "collected": 0
+        }
+      ],
+      "tie": {
+        "tied": true,
+        "tiedWith": [
+          "stu_c3d4",
+          "stu_i9j0"
+        ],
+        "resolvedBy": "lives"
+      }
+    },
+    {
+      "id": "stu_g7h8",
+      "nickname": "최지우",
+      "score": 130,
+      "rank": 6,
+      "eligibleRank": 5,
+      "excluded": false,
+      "playStatus": "played",
+      "livesRemaining": 3,
+      "bricksDestroyed": 11,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "items": [
+        {
+          "kind": "expand",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "slow",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "shield",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "life",
+          "dropped": 1,
+          "collected": 1
+        }
+      ],
+      "tie": {
+        "tied": false,
+        "tiedWith": [],
+        "resolvedBy": "none"
+      }
+    }
+  ],
+  "selectedParticipantIds": [
+    "stu_a1b2"
+  ],
+  "selectionReasons": [
+    {
+      "participantId": "stu_a1b2",
+      "nickname": "김민준",
+      "eligibleRank": 3,
+      "reason": "선정 가능 참가자 5명 중 3위 — 지정 순위 규칙"
+    }
+  ],
+  "selectionIssue": null,
+  "status": "completed",
+  "run": {
+    "kind": "live",
+    "replayOf": null
+  },
+  "eligibleCount": 5
+}

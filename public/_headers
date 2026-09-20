@@ -1,0 +1,72 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  브릭픽 BrickPick — 응답 헤더 설정
+#
+#  ▣ 여기에 "수업 앱 주소"를 적는다.
+#    아래 /embed/* 의 frame-ancestors 목록에 **브릭픽을 iframe 으로 여는 수업 앱의
+#    주소**를 적어야 한다. 목록에 없는 주소에서는 게임 화면이 빈 칸으로 보인다.
+#
+#  ▣ 모든 출처를 허용하지 마라.
+#    frame-ancestors 에 * 를 적거나 규칙을 지우면 아무 사이트나 우리 게임을
+#    자기 화면인 척 감쌀 수 있다(클릭재킹). 주소를 하나씩 적는다.
+#
+#  ▣ X-Frame-Options 는 일부러 넣지 않았다.
+#    그 헤더는 "같은 출처만" 또는 "전부 금지" 두 가지뿐이라, 다른 주소의 수업 앱이
+#    iframe 으로 게임을 못 열게 된다. 허용 목록이 되는 CSP frame-ancestors 만 쓴다.
+#
+#  이 파일은 Cloudflare(Workers Static Assets · Pages)와 Netlify 가 같은 형식으로 읽는다.
+#  형식: 경로를 맨 왼쪽에, 그 아래 헤더를 두 칸 들여쓰기. # 로 시작하면 주석.
+#  빌드하면 public/_headers → dist/_headers 로 그대로 복사된다.
+# ════════════════════════════════════════════════════════════════════════════
+
+
+# ── 전역 ────────────────────────────────────────────────────────────────────
+# 모든 응답에 붙는 기본 보호 장치.
+/*
+  # 브라우저가 파일 내용을 보고 종류를 멋대로 추측하지 않게 한다.
+  X-Content-Type-Options: nosniff
+  # 다른 사이트로 이동할 때 우리 주소(수업 코드가 들어 있을 수 있다)를 넘기지 않는다.
+  Referrer-Policy: no-referrer
+  # 쓰지 않는 장치 권한은 전부 막고, 전체화면만 자기 자신에게 허용한다.
+  # (게임의 전체화면 버튼 때문에 fullscreen 은 남겨 둬야 한다.)
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self)
+
+
+# ── 임베드 진입점: iframe 으로 열 수 있는 주소 ──────────────────────────────
+# ▼▼▼ 운영 목록 — 실제로 쓰는 수업 앱 주소만 이 줄에 적는다 ▼▼▼
+# 여러 개면 공백으로 이어 쓴다:
+#   frame-ancestors 'self' https://lesson.example.com https://class.example.org
+/embed/*
+  Content-Security-Policy: frame-ancestors 'self' https://lesson.example.com
+  # 임베드 진입점은 HTML 한 장뿐이다. 새로 배포하면 바로 반영돼야 하므로 캐시하지 않는다.
+  Cache-Control: no-cache
+
+# /embed (끝 슬래시 없는 주소)도 같은 규칙을 받게 한다.
+# 보통은 /embed/ 로 넘겨 주지만, 중간 프록시가 그대로 내려줄 때를 대비한 안전장치다.
+/embed
+  Content-Security-Policy: frame-ancestors 'self' https://lesson.example.com
+
+
+# ── 개발용 허용 (운영 목록과 절대 섞지 마라) ────────────────────────────────
+# 로컬에서 수업 앱(예: http://localhost:5173)이 게임을 iframe 으로 열어 봐야 할 때만
+# 아래 두 줄의 # 를 떼고, **배포 전에 반드시 다시 붙인다.**
+# 운영 배포에 localhost 가 남아 있어도 공격에 직접 쓰이진 않지만,
+# "허용 목록을 손으로 관리한다"는 규칙이 흐려지므로 남기지 않는다.
+#
+# /embed/*
+#   Content-Security-Policy: frame-ancestors 'self' http://localhost:5173 http://127.0.0.1:5173
+#
+# 개발 서버(npm run dev)는 이 파일을 쓰지 않는다. vite.config.ts 의 server.headers 가
+# 이미 localhost 전체를 허용하고 있으니, 대개는 위 주석을 건드릴 일이 없다.
+
+
+# ── 정적 자산 캐시 ──────────────────────────────────────────────────────────
+# 빌드가 파일 이름에 해시를 붙이므로 오래 캐시해도 안전하다.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML 은 캐시하지 않는다. 새로 배포하면 바로 반영돼야 한다.
+# (/embed/* 는 위에서 이미 no-cache 를 받았다.)
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache

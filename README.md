@@ -1,0 +1,206 @@
+# 브릭픽 BrickPick
+
+수업 참여자의 닉네임을 받아 **벽돌깨기 경기**를 치르고, 그 결과로 **발표자를 정하는** 웹 게임입니다.
+
+1980~90년대 아케이드 벽돌깨기의 인상을 현대적으로 해석했습니다. 원작의 로고·스프라이트·음악·
+효과음은 전혀 쓰지 않았고, 화면과 소리를 모두 코드로 그리고 합성합니다.
+
+```
+닉네임 입력  →  경기 방식·난이도  →  선정 규칙  →  규칙 요약  →  경기  →  결과
+```
+
+---
+
+## 무엇을 할 수 있나
+
+**경기 방식 두 가지**
+
+- **자동 경기** — 참가자별로 독립된 경기장이 생기고 전부 동시에 진행됩니다.
+  참가자는 조작하지 않고 관전합니다. 기본 30초(15/30/60초 선택).
+  화면에 **"자동 경기 · 게임으로 진행하는 추첨"** 이라고 표시됩니다.
+  결과는 실력 평가가 아니라 게임으로 진행하는 추첨입니다.
+- **직접 조작** — 같은 기기에서 한 명씩 차례로 플레이합니다. 마우스·키보드·터치.
+  전원이 끝나면 점수와 순위를 집계합니다. 1인 연습 플레이도 됩니다.
+
+**발표자 선정 규칙 여섯 가지**
+
+최고 성적 1명 · 최저 성적 1명 · 지정 순위 1명(예: 3위) · 상위 N명 · 하위 N명 ·
+지정한 복수 순위(예: 2위, 5위, 8위)
+
+**이미 발표한 사람 제외** — 제외한 뒤의 후보 순위를 기준으로 뽑습니다.
+전체 순위와 후보 순위를 결과에 **둘 다** 담고, 화면에도 어느 기준인지 적습니다.
+
+**아이템 7종** — 패들 확장 · 캐치 · 멀티볼 · 슬로우 · 레이저 · 보호막 · 추가 목숨.
+벽돌을 부수면 캡슐이 떨어지고, **패들로 받아야** 효과가 적용됩니다.
+
+**쓰는 방법 세 가지 (같은 게임 엔진)**
+
+1. **독립 웹사이트** — 교사가 닉네임을 직접 입력하고 진행
+2. **iframe 삽입** — 다른 수업 앱이 배포된 게임을 열고 참가자를 넘긴 뒤 결과를 받음
+3. **코드 모듈** — npm 패키지로 설치해 컴포넌트/함수로 사용
+
+---
+
+## 빠르게 시작하기
+
+Node 22 이상이 필요합니다 (`.nvmrc` 참고).
+
+```bash
+npm install
+npm run dev
+```
+
+브라우저에서 `http://localhost:5173` 을 엽니다.
+임베드 화면은 `http://localhost:5173/embed/` 입니다.
+
+### 전체 검증
+
+```bash
+npm run verify
+```
+
+타입 검사 → 테스트 → 앱 빌드 → 라이브러리 빌드를 차례로 돌립니다.
+
+### 배포 결과를 그대로 확인
+
+```bash
+npm run build:app
+npm run serve:dist
+```
+
+`http://localhost:4178` 과 `http://localhost:4178/embed/` 가 모두 열려야 합니다
+(주소를 직접 입력하거나 새로고침해도 됩니다).
+
+---
+
+## 수업에서 쓰는 법 (독립 실행)
+
+1. **참가자 입력** — 닉네임을 줄바꿈이나 쉼표로 한꺼번에 붙여 넣습니다.
+   "예시 참가자 채우기" 로 먼저 연습해 볼 수 있습니다.
+   같은 닉네임이 있어도 됩니다(화면에서 보조 번호로 구별합니다).
+   기본 지원 범위는 1~40명입니다.
+2. **경기 방식과 난이도** — 자동/직접, 쉬움·보통·어려움·사용자 설정, 경기 시간.
+   아이템을 끄거나 개별로 조절할 수 있습니다. 예상 진행 시간이 표시됩니다.
+3. **선정 규칙** — 여섯 가지 중 하나를 고르고, 이미 발표한 사람을 체크해 제외합니다.
+4. **규칙 요약** — 점수표·동점 처리·난이도 수치·아이템·선정 규칙·seed 를 경기 전에 확인합니다.
+   **시작하면 설정을 바꿀 수 없습니다.**
+5. **경기** — 시작/일시정지/재개/취소, 소리 켜기·끄기, 전체 화면.
+   실시간 순위와 남은 시간이 보입니다.
+6. **결과** — 이번 발표자를 강조해 보여 주고, 점수·최종 순위·선정 기준·선정 이유를 함께 적습니다.
+   전체 결과를 펼쳐 볼 수 있고, 결과 JSON 을 내려받거나 같은 설정으로 새 경기를 시작할 수 있습니다.
+
+> 교실 프로젝터에서 닉네임·순위·남은 시간이 읽히도록 만들었습니다.
+> 모션 감소 설정과 소리 끄기를 지원하며, 모든 조작은 키보드로도 가능합니다.
+
+---
+
+## 정보 저장
+
+- **참가자와 결과를 외부 서버로 보내지 않습니다.** 서버도 계정도 데이터베이스도 없습니다.
+- 기본으로 저장하는 것은 **소리·난이도·모션 감소 같은 환경설정뿐**입니다(브라우저 로컬 저장소).
+- 참가자 명단과 결과를 남기려면 **"이 기기에 저장"** 을 눌러야 하며, **지우는 버튼**도 있습니다.
+- 임베드/모듈 모드에서는 호스트(수업 앱)가 준 명단과 규칙을 게임이 임의로 바꾸지 않습니다.
+- 닉네임은 항상 텍스트로 출력합니다(HTML 로 해석하지 않습니다).
+
+점수는 브라우저에서 계산됩니다. **서버가 검증한 성적이 아닙니다.**
+수업 중 발표자를 정하는 용도에는 충분하지만, 성적이 평가에 반영되는 상황에는 맞지 않습니다.
+
+---
+
+## 다른 수업 앱에 붙이기
+
+가장 짧은 방법 두 가지입니다. 자세한 내용은 [docs/integration.md](docs/integration.md).
+
+### iframe
+
+```html
+<iframe id="game" allow="fullscreen; autoplay"
+        src="https://brickpick.example.com/embed/?parentOrigin=https%3A%2F%2Flesson.example.com">
+</iframe>
+```
+
+```js
+import { createBrickPickHost } from 'brickpick/host'
+
+const host = createBrickPickHost({
+  container: document.getElementById('game-box'),
+  gameOrigin: 'https://brickpick.example.com',
+  input: {
+    sessionId: 'lesson-7:activity-3',
+    participants: [{ id: 'stu_a1', nickname: '김민준' }, { id: 'stu_b2', nickname: '이서연' }],
+    mode: 'auto',
+    selectionRule: { kind: 'ranks', ranks: [3] },
+    excludedParticipantIds: ['stu_b2'],
+  },
+  autoStart: true,
+  onComplete: (result) => {
+    // result.selectedParticipantIds 에 **우리가 준 ID 그대로** 들어 있다
+    savePresenters(result.selectedParticipantIds)
+  },
+})
+```
+
+### React 컴포넌트
+
+```tsx
+import { BrickPick } from 'brickpick/react'
+import 'brickpick/style.css'
+
+<BrickPick
+  participants={roster}                       // [{ id, nickname }]
+  mode="auto"
+  selectionRule={{ kind: 'top', count: 1 }}
+  excludedParticipantIds={alreadyPresented}
+  autoStart
+  onComplete={(result) => savePresenters(result.selectedParticipantIds)}
+/>
+```
+
+게임은 **선정 결과만 돌려줍니다.** 로그인·수업 관리·참가자 관리·발표 이력 저장은
+수업 앱이 하던 대로 합니다. 게임이 다시 구현하지 않습니다.
+
+---
+
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | 엔진과 어댑터 구조, 계층 규칙 |
+| [docs/integration.md](docs/integration.md) | 모듈·iframe 연동 방법 |
+| [docs/protocol.md](docs/protocol.md) | 데이터 타입, 메시지 순서, 오류 처리 |
+| [docs/deployment.md](docs/deployment.md) | Cloudflare Workers / Pages / Netlify 배포와 도메인 연결 |
+| [docs/game-rules.md](docs/game-rules.md) | 점수·난이도·아이템·순위·동점 규칙 |
+| [docs/claude-code-handoff.md](docs/claude-code-handoff.md) | 다른 수업 앱에서 연동할 때 읽을 인수인계 문서 |
+
+실행 가능한 예제: [`examples/html-host`](examples/html-host) (순수 HTML + iframe),
+[`examples/react-host`](examples/react-host) (npm 패키지 설치)
+
+---
+
+## 명령 모음
+
+| 명령 | 하는 일 |
+|---|---|
+| `npm run dev` | 개발 서버 (5173) |
+| `npm run build:app` | 정적 사이트 → `dist/` |
+| `npm run build:lib` | 라이브러리 → `dist-lib/` |
+| `npm run typecheck` | 타입 검사 |
+| `npm test` | 테스트 |
+| `npm run verify` | 타입 검사 + 테스트 + 빌드 전부 |
+| `npm run serve:dist` | 빌드 결과를 정적 서버로 (4178) |
+| `npm run test:integration` | 라이브러리를 예제 앱에 실제로 설치해 빌드 |
+| `npm run deploy:workers` | Cloudflare Workers Static Assets 배포 |
+| `npm run deploy:pages` | Cloudflare Pages 배포 |
+
+---
+
+## 범위 밖
+
+- **온라인 멀티플레이** — 여러 학생의 기기에서 동시에 접속하는 방식은 들어 있지 않습니다.
+  현재 모드는 한 브라우저에서 완결됩니다. 나중에 네트워크 어댑터를 붙일 수 있도록
+  게임 엔진은 브라우저 기능을 전혀 쓰지 않는 상태로 유지돼 있습니다.
+- **로그인·수업 관리·참가자 관리** — 수업 앱의 몫입니다.
+
+## 라이선스
+
+MIT

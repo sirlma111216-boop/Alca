@@ -1,0 +1,78 @@
+{
+  "name": "brickpick",
+  "version": "1.0.0",
+  "description": "브릭픽 BrickPick — 수업용 알카노이드 스타일 벽돌깨기 발표자 선정 게임",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "files": [
+    "dist-lib",
+    "README.md"
+  ],
+  "main": "./dist-lib/brickpick.js",
+  "module": "./dist-lib/brickpick.js",
+  "types": "./dist-lib/types/adapters/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-lib/types/adapters/index.d.ts",
+      "import": "./dist-lib/brickpick.js"
+    },
+    "./react": {
+      "types": "./dist-lib/types/adapters/react.d.ts",
+      "import": "./dist-lib/brickpick-react.js"
+    },
+    "./host": {
+      "types": "./dist-lib/types/adapters/iframe/host-client.d.ts",
+      "import": "./dist-lib/brickpick-host.js"
+    },
+    "./style.css": "./dist-lib/brickpick.css",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:app && npm run build:lib",
+    "build:app": "vite build",
+    "build:lib": "vite build --config vite.lib.config.ts && npm run build:types",
+    "build:types": "tsc -p tsconfig.lib.json",
+    "preview": "vite preview",
+    "serve:dist": "node scripts/static-server.mjs dist 4178",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "pack:lib": "npm run build:lib && npm pack --pack-destination ./dist-pack",
+    "test:integration": "node scripts/verify-package-install.mjs",
+    "deploy:workers": "npm run build:app && wrangler deploy",
+    "deploy:pages": "npm run build:app && wrangler pages deploy dist --project-name brickpick"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.95.0"
+  }
+}

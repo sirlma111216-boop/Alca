@@ -1,0 +1,104 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  브릭픽 BrickPick — 지속적 통합(CI)
+#
+#  하는 일: 타입 검사 → 테스트 → 앱 빌드 → 라이브러리 빌드.
+#  여기까지 초록불이면 "배포해도 되는 상태"다.
+#
+#  ▣ 비밀 키(secrets)를 하나도 쓰지 않는다.
+#    그래서 외부 기여자의 pull request 에서도 그대로 돌고, 키가 새어 나갈 자리가 없다.
+#  ▣ 배포 단계는 일부러 넣지 않았다. 켜는 방법은 이 파일 맨 아래 주석에 있다.
+# ════════════════════════════════════════════════════════════════════════════
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# 같은 브랜치에 새 커밋이 올라오면 돌고 있던 예전 검사는 멈춘다(시간·자원 절약).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# 읽기만 하면 충분하다. 저장소에 무언가 쓸 권한을 주지 않는다.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: 타입 검사 · 테스트 · 빌드
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 소스 내려받기
+        uses: actions/checkout@v4
+
+      - name: Node 준비 (.nvmrc 의 버전을 그대로 쓴다)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          # npm 캐시를 재사용해 설치 시간을 줄인다. package-lock.json 이 기준이다.
+          cache: 'npm'
+
+      - name: 의존성 설치 (package-lock.json 그대로 — 버전이 멋대로 올라가지 않는다)
+        run: npm ci
+
+      - name: 타입 검사
+        run: npm run typecheck
+
+      - name: 테스트
+        run: npm run test
+
+      - name: 앱 빌드 (dist/ — 배포용 정적 사이트)
+        run: npm run build:app
+
+      - name: 라이브러리 빌드 (dist-lib/ — npm 패키지용)
+        run: npm run build:lib
+
+      - name: 빌드 결과 올려 두기 (실패했을 때 무엇이 나왔는지 확인용)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brickpick-build
+          path: |
+            dist
+            dist-lib
+          if-no-files-found: ignore
+          retention-days: 7
+
+# ────────────────────────────────────────────────────────────────────────────
+#  배포를 자동으로 돌리고 싶을 때 (지금은 꺼져 있다)
+#
+#  1) Cloudflare 대시보드에서 API 토큰을 만든다.
+#     권한: Account → Workers Scripts → Edit
+#  2) GitHub 저장소 → Settings → Secrets and variables → Actions 에서
+#     CLOUDFLARE_API_TOKEN 과 CLOUDFLARE_ACCOUNT_ID 를 등록한다.
+#  3) 아래 블록의 # 를 떼어 job 으로 살린다.
+#
+#  주의: 아래를 켜면 CI 가 비밀 키를 쓰게 된다. pull_request 에서는 절대 돌지 않도록
+#  if 조건(main 브랜치 push 만)을 그대로 두어야 외부 기여자 PR 로 배포가 나가지 않는다.
+#
+#  deploy:
+#    name: Cloudflare 배포
+#    needs: verify
+#    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: actions/setup-node@v4
+#        with:
+#          node-version-file: '.nvmrc'
+#          cache: 'npm'
+#      - run: npm ci
+#      - run: npm run build:app
+#      - name: wrangler 로 정적 자산 올리기
+#        run: npx wrangler deploy
+#        env:
+#          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+#          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+#
+#  Netlify 로 내보낼 때는 저장소를 Netlify 에 연결하기만 하면 된다.
+#  netlify.toml 에 빌드 명령과 publish 폴더가 이미 적혀 있어 이 워크플로가 필요 없다.
+# ────────────────────────────────────────────────────────────────────────────

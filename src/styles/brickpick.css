@@ -1,0 +1,802 @@
+/*
+ * 브릭픽 게임 화면 스타일.
+ *
+ * 규칙
+ *  - 클래스 이름은 전부 bp- 접두사. body·* 같은 전역 선택자를 쓰지 않는다.
+ *    이 CSS 는 수업 앱(호스트) 안으로 그대로 들어가므로 호스트의 스타일을 건드리면 안 된다.
+ *  - 게임 화면은 다크 테마 고정이다. 색 값은 src/renderer/palette.ts 와 같은 값을
+ *    --bp-* 변수로 선언해 캔버스와 DOM 이 같은 색을 쓴다.
+ *  - 게임판이 화면의 중심이다. HUD·조작부는 가장자리의 얇은 띠로만 존재한다.
+ *  - 교실 프로젝터에서 읽히도록 닉네임·순위·남은 시간은 크고 대비가 높다.
+ *  - 색만으로 상태를 구분하지 않는다 — 순위 번호·글자·기호를 항상 함께 쓴다.
+ */
+
+.bp-root {
+  /* 팔레트 (palette.ts 와 동일) */
+  --bp-background: #070b18;
+  --bp-arena: #0b1226;
+  --bp-grid: #111c3a;
+  --bp-wall: #1e2b52;
+  --bp-wall-highlight: #3b4d84;
+  --bp-paddle: #cbd5f5;
+  --bp-ball: #fdfdff;
+  --bp-text: #e8edff;
+  --bp-text-dim: #8ea0c9;
+  --bp-text-strong: #ffffff;
+  --bp-accent: #22d3ee;
+  --bp-accent-warm: #fbbf24;
+  --bp-accent-pink: #e879f9;
+  --bp-danger: #f87171;
+  --bp-ok: #4ade80;
+
+  --bp-surface: rgba(17, 28, 58, 0.72);
+  --bp-surface-solid: #101a34;
+  --bp-line: rgba(59, 77, 132, 0.55);
+  --bp-radius: 10px;
+  --bp-gap: 12px;
+
+  --bp-font-ui: 'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic',
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --bp-font-num: 'DM Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Consolas,
+    'Liberation Mono', monospace;
+
+  position: relative;
+  display: grid;
+  grid-template-areas: 'stage' 'hud' 'controls';
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: var(--bp-gap);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  padding: var(--bp-gap);
+  background: radial-gradient(120% 90% at 50% 0%, #0d1530 0%, var(--bp-background) 70%);
+  color: var(--bp-text);
+  font-family: var(--bp-font-ui);
+  font-size: 15px;
+  line-height: 1.45;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bp-root *,
+.bp-root *::before,
+.bp-root *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * hidden 속성은 언제나 실제로 숨긴다.
+ * .bp-btn 처럼 display 를 지정한 클래스가 브라우저 기본 [hidden] 규칙을 이기기 때문에
+ * 여기서 한 번 더 못 박아 둔다. (.bp-root 안으로 한정한다 — 호스트 앱은 건드리지 않는다.)
+ */
+.bp-root [hidden] {
+  display: none !important;
+}
+
+.bp-root:focus {
+  outline: none;
+}
+
+.bp-root:focus-visible {
+  outline: 2px solid var(--bp-accent);
+  outline-offset: -2px;
+}
+
+/* ── 게임판 ───────────────────────────────────────────────────────────── */
+
+.bp-stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 240px;
+  min-width: 0;
+  border-radius: var(--bp-radius);
+  background: var(--bp-arena);
+  box-shadow:
+    inset 0 0 0 1px var(--bp-line),
+    0 12px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.bp-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* ── HUD ──────────────────────────────────────────────────────────────── */
+
+.bp-hud {
+  grid-area: hud;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bp-hud[hidden] {
+  display: none;
+}
+
+.bp-hud__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+/* 모드 배지 — 자동 경기에서는 항상 보인다. */
+.bp-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px;
+  border: 1px solid var(--bp-line);
+  border-radius: 999px;
+  background: var(--bp-surface);
+  color: var(--bp-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.bp-mode__glyph {
+  font-family: var(--bp-font-num);
+  font-size: 12px;
+  color: var(--bp-accent);
+}
+
+.bp-timer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.bp-timer__label {
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+
+.bp-timer__value {
+  font-family: var(--bp-font-num);
+  font-size: clamp(22px, 3.4vw, 34px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bp-text-strong);
+  letter-spacing: 0.02em;
+}
+
+.bp-timer__value--low {
+  color: var(--bp-accent-warm);
+}
+
+.bp-progress {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(30, 43, 82, 0.9);
+  overflow: hidden;
+}
+
+.bp-progress__bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bp-accent) 0%, var(--bp-accent-pink) 100%);
+  transition: width 180ms linear;
+}
+
+.bp-turn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 14px;
+  color: var(--bp-text-dim);
+}
+
+.bp-turn[hidden] {
+  display: none;
+}
+
+.bp-turn__name {
+  font-size: clamp(16px, 2.2vw, 20px);
+  font-weight: 700;
+  color: var(--bp-text-strong);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 실시간 순위표 */
+.bp-board {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.bp-board[hidden] {
+  display: none;
+}
+
+.bp-board__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bp-board__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bp-text-dim);
+  letter-spacing: 0.02em;
+}
+
+.bp-board__list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 34vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.bp-row {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--bp-surface);
+  font-size: 14px;
+}
+
+.bp-row--current {
+  border-color: var(--bp-accent);
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.bp-row__rank {
+  font-family: var(--bp-font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--bp-accent);
+  text-align: right;
+}
+
+.bp-row__name {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--bp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bp-row__score {
+  font-family: var(--bp-font-num);
+  font-variant-numeric: tabular-nums;
+  color: var(--bp-text-strong);
+}
+
+.bp-row__lives {
+  font-family: var(--bp-font-num);
+  font-size: 12px;
+  color: var(--bp-text-dim);
+  white-space: nowrap;
+}
+
+/* ── 조작부 ───────────────────────────────────────────────────────────── */
+
+.bp-controls {
+  grid-area: controls;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.bp-controls[hidden] {
+  display: none;
+}
+
+.bp-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--bp-line);
+  border-radius: 8px;
+  background: var(--bp-surface);
+  color: var(--bp-text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 90ms ease;
+}
+
+.bp-btn:hover:not(:disabled) {
+  background: rgba(59, 77, 132, 0.5);
+}
+
+.bp-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.bp-btn:focus-visible {
+  outline: 2px solid var(--bp-accent);
+  outline-offset: 2px;
+}
+
+.bp-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.bp-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(180deg, #2ee0f5 0%, #16b6d4 100%);
+  color: #04131c;
+}
+
+.bp-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #55e9ff 0%, #22c5e2 100%);
+}
+
+.bp-btn--danger {
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #ffd9d9;
+}
+
+.bp-btn--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.18);
+}
+
+.bp-btn--big {
+  min-height: 48px;
+  padding: 0 22px;
+  font-size: 16px;
+}
+
+/* 모바일 발사 버튼 — 오른손 엄지가 닿는 오른쪽 아래. */
+.bp-fire {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 4;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border: 2px solid rgba(34, 211, 238, 0.55);
+  border-radius: 50%;
+  background: rgba(16, 26, 52, 0.86);
+  color: var(--bp-text-strong);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.bp-fire:focus-visible {
+  outline: 2px solid var(--bp-accent);
+  outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+  .bp-fire--on {
+    display: inline-flex;
+  }
+}
+
+/* ── 덮개(오버레이) ───────────────────────────────────────────────────── */
+
+.bp-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(7, 11, 24, 0.82);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.bp-overlay--on {
+  display: flex;
+}
+
+.bp-panel {
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid var(--bp-line);
+  border-radius: 14px;
+  background: var(--bp-surface-solid);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  text-align: center;
+}
+
+.bp-panel__kicker {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bp-accent);
+  letter-spacing: 0.02em;
+}
+
+.bp-panel__title {
+  margin: 0 0 10px;
+  font-size: clamp(20px, 3.6vw, 30px);
+  font-weight: 800;
+  color: var(--bp-text-strong);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.bp-panel__text {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--bp-text);
+}
+
+.bp-panel__note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--bp-text-dim);
+}
+
+/* 선정 규칙을 다 채우지 못했을 때의 경고. 조용히 넘어가면 안 되므로 눈에 띄게 둔다. */
+.bp-panel__warning {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--bp-accent-warm, #fbbf24);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--bp-text, #e8edff);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.bp-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.bp-count {
+  margin: 8px 0;
+  font-family: var(--bp-font-num);
+  font-size: clamp(64px, 16vw, 132px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--bp-accent);
+  text-shadow: 0 0 26px rgba(34, 211, 238, 0.45);
+}
+
+.bp-list {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.bp-list__item {
+  display: grid;
+  grid-template-columns: 2.6em minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(17, 28, 58, 0.66);
+}
+
+.bp-list__item + .bp-list__item {
+  margin-top: 4px;
+}
+
+.bp-list__item--picked {
+  background: rgba(34, 211, 238, 0.14);
+  box-shadow: inset 0 0 0 1px var(--bp-accent);
+}
+
+.bp-list__rank {
+  font-family: var(--bp-font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--bp-accent);
+  text-align: right;
+}
+
+.bp-list__name {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--bp-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.bp-list__meta {
+  font-family: var(--bp-font-num);
+  font-size: 13px;
+  color: var(--bp-text-dim);
+  white-space: nowrap;
+}
+
+.bp-picked {
+  margin: 10px 0 0;
+  padding: 12px;
+  border: 1px solid var(--bp-accent);
+  border-radius: 10px;
+  background: rgba(34, 211, 238, 0.1);
+}
+
+.bp-picked__name {
+  display: block;
+  font-size: clamp(20px, 4vw, 30px);
+  font-weight: 800;
+  color: var(--bp-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.bp-picked__reason {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--bp-text-dim);
+}
+
+/* ── 오류 화면 ────────────────────────────────────────────────────────── */
+
+.bp-root--error {
+  grid-template-areas: 'stage';
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+}
+
+.bp-error {
+  width: min(560px, 100%);
+  padding: 20px;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  border-radius: 12px;
+  background: rgba(40, 14, 20, 0.6);
+}
+
+.bp-error__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffd9d9;
+}
+
+.bp-error__message {
+  margin: 0;
+  font-size: 15px;
+  color: var(--bp-text);
+  overflow-wrap: anywhere;
+}
+
+.bp-error__details {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--bp-text-dim);
+}
+
+.bp-error__details li {
+  overflow-wrap: anywhere;
+}
+
+/* ── 임베드 안내 화면 (연결 중 · 차단 · 전달 실패) ──────────────────────── */
+
+.bp-embed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  padding: 24px;
+  background: radial-gradient(120% 90% at 50% 0%, #0d1530 0%, #070b18 70%);
+  color: #e8edff;
+  font-family:
+    'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic', -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.55;
+}
+
+.bp-embed *,
+.bp-embed *::before,
+.bp-embed *::after {
+  box-sizing: border-box;
+}
+
+.bp-embed [hidden] {
+  display: none !important;
+}
+
+.bp-embed__box {
+  width: min(520px, 100%);
+  padding: 22px;
+  border: 1px solid rgba(59, 77, 132, 0.55);
+  border-radius: 14px;
+  background: #101a34;
+  text-align: center;
+}
+
+.bp-embed--error .bp-embed__box {
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.bp-embed__title {
+  margin: 0 0 10px;
+  font-size: clamp(18px, 3.2vw, 24px);
+  font-weight: 800;
+  color: #ffffff;
+  word-break: keep-all;
+}
+
+.bp-embed__text {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #c3cfee;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.bp-embed__text:last-child {
+  margin-bottom: 0;
+}
+
+.bp-embed__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+/* 안내 화면의 버튼은 .bp-root 밖에 있으므로 색을 직접 준다. */
+.bp-embed .bp-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(59, 77, 132, 0.55);
+  border-radius: 8px;
+  background: rgba(17, 28, 58, 0.72);
+  color: #e8edff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bp-embed .bp-btn--primary {
+  border-color: transparent;
+  background: linear-gradient(180deg, #2ee0f5 0%, #16b6d4 100%);
+  color: #04131c;
+}
+
+.bp-embed .bp-btn:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+/* 화면에는 안 보이지만 스크린 리더는 읽는 영역. */
+.bp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ── 넓은 화면: 순위표를 오른쪽 기둥으로 ─────────────────────────────── */
+
+@media (min-width: 900px) {
+  .bp-root {
+    grid-template-areas:
+      'stage hud'
+      'controls hud';
+    grid-template-columns: minmax(0, 1fr) clamp(220px, 24%, 300px);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .bp-root--error {
+    grid-template-areas: 'stage';
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .bp-board__list {
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .bp-timer {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* ── 좁은 화면 ────────────────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  .bp-root {
+    --bp-gap: 8px;
+    font-size: 14px;
+    min-height: 360px;
+  }
+
+  .bp-board__list {
+    max-height: 26vh;
+  }
+
+  .bp-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .bp-fire {
+    right: 12px;
+    bottom: 12px;
+    width: 92px;
+    height: 92px;
+  }
+}
+
+/* ── 모션 감소 ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-root *,
+  .bp-root *::before,
+  .bp-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.bp-root--reduced-motion .bp-progress__bar,
+.bp-root--reduced-motion .bp-btn {
+  transition: none;
+}
+
+.bp-root--reduced-motion .bp-count {
+  text-shadow: none;
+}

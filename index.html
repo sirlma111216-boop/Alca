@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>브릭픽 BrickPick — 수업용 벽돌깨기 발표자 선정</title>
+    <meta
+      name="description"
+      content="브릭픽은 수업에서 발표자를 정하는 벽돌깨기 게임입니다. 참가자 닉네임을 붙여 넣고 난이도와 선정 규칙을 고르면, 경기 결과에 따라 이번 발표자가 정해집니다. 명단과 결과는 저장하지 않으며 외부로 보내지 않습니다."
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#070b18" />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" href="data:," />
+    <style>
+      /* 첫 화면이 흰색으로 번쩍이지 않도록 배경만 먼저 칠한다. */
+      html,
+      body {
+        margin: 0;
+        background: #070b18;
+        color: #e8edff;
+        font-family:
+          'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Malgun Gothic', -apple-system,
+          BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      }
+      #bp-boot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        color: #8ea0c9;
+        font-size: 15px;
+        letter-spacing: 0.04em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <p id="bp-boot">브릭픽을 불러오는 중입니다…</p>
+    </div>
+    <noscript>
+      <p style="padding: 24px; line-height: 1.7">
+        브릭픽은 자바스크립트로 동작합니다. 브라우저에서 자바스크립트를 켠 뒤 다시 열어 주세요.
+        인터넷 연결이나 로그인은 필요하지 않습니다.
+      </p>
+    </noscript>
+    <script type="module" src="/src/standalone/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "sessionId": "lesson-2026-09-20-3교시:activity-7",
+  "status": "error",
+  "code": "NOT_ENOUGH_CANDIDATES",
+  "message": "선정 가능한 참가자가 5명이라 8위를 뽑을 수 없습니다.",
+  "details": [
+    "rank=8"
+  ]
+}

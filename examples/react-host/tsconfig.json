@@ -1,0 +1,27 @@
+{
+  // 예제 앱 전용 설정. 저장소 루트의 tsconfig.json 은 examples 를 제외하고 있으므로
+  // 이 파일이 예제의 타입 검사를 혼자 책임진다.  실행:  npm run typecheck
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    // 패키지의 "exports" 필드를 읽어야 'brickpick/react' 가 풀린다.
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

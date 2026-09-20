@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "sessionId": "lesson-2026-09-20-3교시:activity-7",
+  "participants": [
+    {
+      "id": "stu_a1b2",
+      "nickname": "김민준"
+    },
+    {
+      "id": "stu_c3d4",
+      "nickname": "이서연"
+    },
+    {
+      "id": "stu_e5f6",
+      "nickname": "박도윤"
+    },
+    {
+      "id": "stu_g7h8",
+      "nickname": "최지우"
+    },
+    {
+      "id": "stu_i9j0",
+      "nickname": "정하은"
+    },
+    {
+      "id": "stu_k1l2",
+      "nickname": "김민준"
+    }
+  ],
+  "mode": "auto",
+  "difficulty": "normal",
+  "roundDurationMs": 30000,
+  "selectionRule": {
+    "kind": "ranks",
+    "ranks": [
+      3
+    ]
+  },
+  "excludedParticipantIds": [
+    "stu_c3d4"
+  ],
+  "seed": "KX7M2PQR4T",
+  "locale": "ko",
+  "soundEnabled": true,
+  "reducedMotion": false
+}

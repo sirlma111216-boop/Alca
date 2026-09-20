@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>브릭픽 연동 예제 — React 호스트</title>
+<style>
+  /* 예제 페이지의 껍데기 스타일만 여기 둔다.
+     게임 화면의 스타일은 'brickpick/style.css' 가 가져온다(main.tsx 에서 import). */
+  :root {
+    --bg:      #04070f;
+    --panel:   #0d1426;
+    --panel-2: #111b33;
+    --line:    #1e2a49;
+    --text:    #e6ecff;
+    --muted:   #8ea0c8;
+    --cyan:    #2ee6d6;
+    --magenta: #ff5ad8;
+    --blue:    #4d8cff;
+    --yellow:  #ffd23f;
+    --ok:      #38e08b;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "D2Coding", monospace;
+    --sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 520px at 50% -8%, #12224a 0%, transparent 62%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 20px 16px 56px; }
+
+  .head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .head h1 { margin: 0; font-size: 21px; }
+  .head h1 .mark { color: var(--cyan); }
+  .head .sub { color: var(--muted); font-size: 13px; }
+
+  .note {
+    border: 1px solid var(--cyan); border-left-width: 6px; border-radius: 10px;
+    background: linear-gradient(90deg, rgba(46,230,214,0.10), rgba(46,230,214,0.02));
+    padding: 11px 15px; font-size: 14px; margin-bottom: 14px;
+  }
+  .note b { color: var(--cyan); }
+  .note code { font-family: var(--mono); color: var(--yellow); }
+
+  /* 조작 줄은 한 줄로 얇게 — 게임판이 화면의 중심이어야 한다 */
+  .bar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; font-size: 13px;
+  }
+  .bar .label { color: var(--muted); }
+  .bar .grow { flex: 1 1 auto; }
+
+  button {
+    font-family: var(--sans); font-size: 14px;
+    border-radius: 8px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--text);
+    padding: 7px 12px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--blue); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button[aria-pressed="true"] {
+    border-color: var(--cyan); background: rgba(46,230,214,0.14); font-weight: 700;
+  }
+  button[aria-pressed="true"]::before { content: "● "; color: var(--cyan); }
+  button[aria-pressed="false"]::before { content: "○ "; color: var(--muted); }
+  button.primary {
+    background: linear-gradient(180deg, #1f7bff, #1558c8);
+    border-color: #3f8cff; color: #fff; font-weight: 700;
+  }
+  button.primary::before { content: none; }
+
+  /* 게임판 */
+  .stage {
+    background: #000; border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; min-height: 460px; position: relative;
+  }
+  @media (max-width: 760px) { .stage { min-height: 340px; } }
+  .stage > * { width: 100%; }
+  .stage .empty {
+    position: absolute; inset: 0; display: grid; place-content: center;
+    text-align: center; color: var(--muted); gap: 6px; padding: 24px;
+  }
+  .stage .empty .big { color: var(--text); font-size: 17px; }
+
+  /* 결과 */
+  .result {
+    margin-top: 14px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden;
+  }
+  .result h2 {
+    margin: 0; padding: 9px 14px; font-size: 12px; letter-spacing: 0.08em;
+    color: var(--muted); background: var(--panel-2); border-bottom: 1px solid var(--line);
+  }
+  .result .body { padding: 12px 14px; }
+  .picked { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+  .picked .who {
+    border: 1px solid var(--cyan); border-radius: 999px; padding: 4px 12px;
+    background: rgba(46,230,214,0.12); font-size: 14px;
+  }
+  .picked .who .id { font-family: var(--mono); color: var(--yellow); font-size: 12px; }
+  .ok { color: var(--ok); font-weight: 700; }
+  .muted { color: var(--muted); }
+  pre {
+    margin: 10px 0 0; max-height: 260px; overflow: auto; padding: 10px;
+    background: #060a14; border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--mono); font-size: 12px; color: #b8c8ea;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  ul.plain { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

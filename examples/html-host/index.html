@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>브릭픽 연동 예제 — 순수 HTML 호스트</title>
+<!--
+  ════════════════════════════════════════════════════════════════════════════
+   브릭픽 BrickPick — iframe 연동 예제 (빌드 도구 없음)
+
+   이 파일 하나가 "수업 앱" 역할을 한다. 브라우저에서 바로 열면 된다.
+   일부러 브릭픽이 제공하는 도우미(createBrickPickHost)를 쓰지 않고
+   postMessage 를 손으로 주고받는다 — 오가는 메시지를 눈으로 보기 위해서다.
+
+   지켜야 하는 순서 (src/adapters/iframe/protocol.ts 의 규칙)
+     1. 먼저 message 리스너를 붙인다.      ← 순서를 바꾸면 READY 를 놓친다
+     2. 그다음 iframe.src 를 넣는다.
+     3. READY 를 받으면 INIT 을 **한 번만** 보낸다.
+     4. INIT_ACK 가 accepted 면 START 를 보낸다.
+     5. COMPLETE 를 받으면 COMPLETE_ACK 로 답한다. (답이 없으면 게임이 재전송한다)
+
+   보안 규칙
+     · 받을 때: event.origin 과 event.source 를 **둘 다** 확인한다.
+     · 보낼 때: targetOrigin 에 정확한 게임 주소를 적는다. '*' 는 쓰지 않는다.
+     · 닉네임을 URL 쿼리에 넣지 않는다. 참가자는 INIT 메시지로만 보낸다.
+  ════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  /* ── 색 · 글꼴 ─────────────────────────────────────────────────────────── */
+  :root {
+    --bg:        #070b16;
+    --bg-deep:   #04070f;
+    --panel:     #0d1426;
+    --panel-2:   #111b33;
+    --line:      #1e2a49;
+    --text:      #e6ecff;
+    --muted:     #8ea0c8;
+    --cyan:      #2ee6d6;
+    --magenta:   #ff5ad8;
+    --blue:      #4d8cff;
+    --yellow:    #ffd23f;
+    --ok:        #38e08b;
+    --bad:       #ff6b6b;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, "D2Coding", monospace;
+    --sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--bg-deep);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #12224a 0%, transparent 60%),
+      var(--bg-deep);
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 20px 16px 56px; }
+
+  /* ── 머리말 ───────────────────────────────────────────────────────────── */
+  header.top { margin-bottom: 18px; }
+
+  .brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .brand h1 {
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+  }
+  .brand h1 .mark { color: var(--cyan); }
+  .brand .sub { color: var(--muted); font-size: 13px; }
+
+  /* 핵심 검증 안내 — 이 예제를 여는 이유 */
+  .checkpoint {
+    margin-top: 12px;
+    border: 1px solid var(--cyan);
+    border-left-width: 6px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(46,230,214,0.10), rgba(46,230,214,0.02));
+    padding: 12px 16px;
+  }
+  .checkpoint b { color: var(--cyan); }
+  .checkpoint p { margin: 4px 0 0; font-size: 14px; }
+  .checkpoint code { font-family: var(--mono); color: var(--yellow); }
+
+  .warn-file {
+    margin-top: 12px; display: none;
+    border: 1px solid var(--yellow); border-left-width: 6px; border-radius: 10px;
+    background: rgba(255,210,63,0.08); padding: 12px 16px; font-size: 14px;
+  }
+  .warn-file b { color: var(--yellow); }
+  .warn-file code { font-family: var(--mono); }
+
+  /* ── 배치: 설정(좁게) + 게임판(넓게) ─────────────────────────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card > h2 {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .card > .body { padding: 14px; }
+
+  /* 설정 카드는 촘촘하게 — 게임판보다 커 보이면 안 된다 */
+  .settings .body { padding: 12px; font-size: 14px; }
+  .settings label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .field { margin-bottom: 12px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  input[type="text"], input[type="number"], input[type="url"], select {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 7px 9px;
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, input[type="url"]:focus, select:focus {
+    outline: 2px solid var(--blue);
+    outline-offset: 1px;
+    border-color: var(--blue);
+  }
+  input.mono { font-family: var(--mono); }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    flex: 1 1 auto; text-align: center;
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px 8px; cursor: pointer; font-size: 13px; color: var(--muted);
+    background: var(--bg); user-select: none;
+  }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip.on { border-color: var(--cyan); color: var(--text); background: rgba(46,230,214,0.12); }
+  .chip.on::before { content: "● "; color: var(--cyan); }
+  .chip:not(.on)::before { content: "○ "; }
+
+  .check { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; margin: 6px 0; }
+  .check input { width: 16px; height: 16px; accent-color: var(--cyan); }
+
+  /* 참가자 표 */
+  table.people { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.people th {
+    text-align: left; color: var(--muted); font-weight: 600; font-size: 11px;
+    padding: 3px 4px; border-bottom: 1px solid var(--line); letter-spacing: 0.04em;
+  }
+  table.people td { padding: 2px 3px; vertical-align: middle; }
+  table.people td.num { color: var(--muted); font-family: var(--mono); width: 22px; text-align: right; }
+  table.people input { padding: 5px 6px; font-size: 13px; }
+  table.people td.ex { width: 34px; text-align: center; }
+  table.people td.del { width: 26px; }
+
+  button {
+    font-family: var(--sans);
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--text);
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--blue); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary {
+    background: linear-gradient(180deg, #1f7bff, #1558c8);
+    border-color: #3f8cff; color: #fff; font-weight: 700;
+  }
+  button.ghost { background: transparent; }
+  button.tiny { padding: 3px 7px; font-size: 12px; }
+  button.danger { border-color: #5a2230; color: #ffb3bf; }
+
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btnrow > button { flex: 1 1 auto; }
+
+  /* ── 게임판 ───────────────────────────────────────────────────────────── */
+  .stage .body { padding: 0; background: #000; }
+  .frame-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 420px;
+    background:
+      repeating-linear-gradient(45deg, #080d1a 0 12px, #0a1120 12px 24px);
+  }
+  @media (max-width: 1000px) { .frame-box { min-height: 320px; aspect-ratio: 3 / 4; } }
+  .frame-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+  .frame-box .placeholder {
+    position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
+    color: var(--muted); gap: 6px; padding: 24px;
+  }
+  .frame-box .placeholder .big { font-size: 18px; color: var(--text); }
+
+  /* 상태 줄 — 색만으로 구분하지 않고 글자와 기호를 함께 쓴다 */
+  .statusbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel-2);
+    font-size: 13px;
+  }
+  .badge {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+    border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px;
+  }
+  .badge[data-tone="idle"]    { color: var(--muted); }
+  .badge[data-tone="wait"]    { color: var(--yellow);  border-color: var(--yellow); }
+  .badge[data-tone="live"]    { color: var(--cyan);    border-color: var(--cyan); }
+  .badge[data-tone="done"]    { color: var(--ok);      border-color: var(--ok); }
+  .badge[data-tone="stop"]    { color: var(--bad);     border-color: var(--bad); }
+  .statusbar .grow { flex: 1 1 auto; }
+  .statusbar .meta { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+
+  /* ── 아래쪽: 로그 · 결과 ─────────────────────────────────────────────── */
+  .bottom { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; margin-top: 16px; }
+  @media (max-width: 1000px) { .bottom { grid-template-columns: 1fr; } }
+
+  .log { height: 320px; overflow-y: auto; font-family: var(--mono); font-size: 12px; padding: 8px 10px; }
+  .log .entry { border-bottom: 1px dashed #16203a; padding: 4px 0; }
+  .log .entry .head { display: flex; gap: 8px; align-items: baseline; }
+  .log .entry .t { color: #5d6e94; }
+  .log .entry .dir { width: 5.5em; flex: none; }
+  .log .entry[data-dir="out"] .dir { color: var(--magenta); }
+  .log .entry[data-dir="in"]  .dir { color: var(--cyan); }
+  .log .entry[data-dir="sys"] .dir { color: var(--yellow); }
+  .log .entry .ty { color: var(--text); font-weight: 700; }
+  .log .entry .note { color: var(--muted); }
+  .log .entry pre {
+    margin: 3px 0 0 6.2em; color: #9fb2d8; white-space: pre-wrap; word-break: break-all;
+    max-height: 9em; overflow: auto;
+  }
+
+  .result pre {
+    margin: 0; height: 320px; overflow: auto; padding: 10px;
+    font-family: var(--mono); font-size: 12px; color: #b8c8ea; white-space: pre-wrap; word-break: break-all;
+  }
+
+  /* ID 왕복 확인 표 */
+  .roundtrip { padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .roundtrip table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  .roundtrip th { text-align: left; color: var(--muted); font-weight: 600; padding: 3px 4px; }
+  .roundtrip td { padding: 3px 4px; border-top: 1px solid #16203a; }
+  .verdict { font-weight: 700; }
+  .verdict.ok  { color: var(--ok); }
+  .verdict.bad { color: var(--bad); }
+
+  .hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <h1><span class="mark">▚</span> 브릭픽 연동 예제 <span style="color:var(--muted)">/</span> 순수 HTML 호스트</h1>
+      <span class="sub">빌드 도구 없이, postMessage 를 손으로 주고받는 수업 앱 흉내</span>
+    </div>
+
+    <div class="checkpoint">
+      <b>핵심 검증 포인트</b>
+      <p>
+        여기서 넣은 <b>참가자 ID</b> 가 결과의 <code>selectedParticipantIds</code> 에
+        <b>그대로</b> 돌아오는지 확인하세요.
+        게임은 ID 를 내부 번호로 바꾸지 않습니다 — 글자 하나까지 같아야 정상입니다.
+        아래 <b>ID 왕복 확인</b> 칸이 자동으로 대조해 줍니다.
+      </p>
+    </div>
+
+    <div class="warn-file" id="fileWarn">
+      <b>주의 — 파일을 직접 열었습니다 (file://)</b><br />
+      이 상태에서는 이 페이지의 출처가 <code>null</code> 이라 게임이 부모를 확인할 수 없어
+      연동이 되지 않습니다. 이 폴더를 간단한 서버로 열어 주세요. 예)
+      <code>node scripts/static-server.mjs examples/html-host 4179</code>
+      그다음 <code>http://127.0.0.1:4179/</code> 로 접속합니다.
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- ══════════════ 왼쪽: 설정 ══════════════ -->
+    <section class="card settings">
+      <h2>수업 앱이 정하는 것</h2>
+      <div class="body">
+
+        <div class="field">
+          <label for="gameUrl">게임 주소 (브릭픽이 배포된 곳)</label>
+          <input id="gameUrl" class="mono" type="url" value="http://localhost:4178"
+                 placeholder="http://localhost:4178" />
+          <p class="hint">임베드 진입점 <code>/embed/</code> 는 자동으로 붙습니다.</p>
+        </div>
+
+        <div class="field">
+          <label>참가자 <span id="peopleCount" style="color:var(--text)"></span></label>
+          <table class="people">
+            <thead>
+              <tr>
+                <th></th><th>ID (그대로 돌아옵니다)</th><th>닉네임</th><th title="제외">빼기</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="peopleBody"></tbody>
+          </table>
+          <div class="btnrow" style="margin-top:8px">
+            <button class="tiny ghost" id="addPerson" type="button">+ 행 추가</button>
+            <button class="tiny ghost" id="fillSample" type="button">예시로 채우기</button>
+          </div>
+          <p class="hint">
+            「빼기」를 체크하면 <code>excludedParticipantIds</code> 로 나갑니다
+            (이미 발표한 사람 등). 제외된 사람은 순위에는 남고 선정에서만 빠집니다.
+          </p>
+        </div>
+
+        <div class="field">
+          <label>진행 방식</label>
+          <div class="chips" id="modeChips">
+            <label class="chip on"><input type="radio" name="mode" value="auto" checked />자동 경기</label>
+            <label class="chip"><input type="radio" name="mode" value="manual" />직접 조작</label>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="difficulty">난이도</label>
+            <select id="difficulty">
+              <option value="easy">쉬움</option>
+              <option value="normal" selected>보통</option>
+              <option value="hard">어려움</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="duration">경기 시간</label>
+            <select id="duration">
+              <option value="15000">15초</option>
+              <option value="30000" selected>30초</option>
+              <option value="60000">60초</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="rulePreset">선정 규칙</label>
+          <select id="rulePreset">
+            <option value="best">최고 성적 1명</option>
+            <option value="worst">최저 성적 1명</option>
+            <option value="rank">지정 순위 1명</option>
+            <option value="topN">상위 N명</option>
+            <option value="bottomN">하위 N명</option>
+            <option value="ranks">지정한 복수 순위</option>
+          </select>
+          <div id="ruleValueBox" style="display:none; margin-top:8px">
+            <label for="ruleValue" id="ruleValueLabel">값</label>
+            <input id="ruleValue" class="mono" type="text" value="3" />
+          </div>
+          <p class="hint" id="rulePreview"></p>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="seed">재현용 seed</label>
+            <input id="seed" class="mono" type="text" value="2026-1반-3차시" />
+          </div>
+          <div class="field">
+            <label for="sessionId">세션 ID</label>
+            <input id="sessionId" class="mono" type="text" value="" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check"><input type="checkbox" id="soundEnabled" checked /> 소리 켜기</label>
+          <label class="check"><input type="checkbox" id="reducedMotion" /> 모션 줄이기 (화면 효과 최소화)</label>
+          <label class="check"><input type="checkbox" id="autoStart" checked /> INIT 이 받아들여지면 바로 START 보내기</label>
+        </div>
+
+        <div class="btnrow">
+          <button class="primary" id="openGame" type="button">게임 열기</button>
+          <button class="ghost" id="closeGame" type="button" disabled>닫기</button>
+        </div>
+        <div class="btnrow" style="margin-top:8px">
+          <button id="btnStart"  type="button" disabled>START</button>
+          <button id="btnPause"  type="button" disabled>일시정지</button>
+          <button id="btnResume" type="button" disabled>이어하기</button>
+          <button class="danger" id="btnCancel" type="button" disabled>취소</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ 오른쪽: 게임판 ══════════════ -->
+    <section class="card stage">
+      <h2>게임판</h2>
+      <div class="statusbar">
+        <span class="badge" id="stateBadge" data-tone="idle">준비 전</span>
+        <span class="meta" id="phaseText">—</span>
+        <span class="grow"></span>
+        <span class="meta" id="progressText"></span>
+      </div>
+      <div class="body">
+        <div class="frame-box" id="frameBox">
+          <div class="placeholder" id="placeholder">
+            <div class="big">게임이 아직 열리지 않았습니다</div>
+            <div>왼쪽에서 참가자와 규칙을 정한 뒤 <b>게임 열기</b> 를 누르세요.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ══════════════ 아래: 로그 · 결과 ══════════════ -->
+  <div class="bottom">
+
+    <section class="card">
+      <h2>주고받은 메시지</h2>
+      <div class="statusbar">
+        <span class="meta">→ 보냄 · ← 받음 · ⚙ 내부</span>
+        <span class="grow"></span>
+        <button class="tiny ghost" id="clearLog" type="button">지우기</button>
+      </div>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="card result">
+      <h2>결과</h2>
+      <div class="roundtrip" id="roundtrip">
+        <b>ID 왕복 확인</b> — 결과가 오면 여기서 대조합니다.
+      </div>
+      <pre id="resultJson">아직 결과가 없습니다.
+
+경기가 정상적으로 끝나면 COMPLETE 메시지의 result 가 그대로 여기에 찍힙니다.
+취소·오류는 결과가 아니라 CANCEL / ERROR 로 옵니다.</pre>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   프로토콜 상수 — src/adapters/iframe/protocol.ts 와 같은 값이어야 한다.
+   ══════════════════════════════════════════════════════════════════════════ */
+const CHANNEL = 'brickpick'
+const PROTOCOL_VERSION = '1.0'
+const SCHEMA_VERSION = '1.0'
+const PARENT_ORIGIN_QUERY_KEY = 'parentOrigin'
+const EMBED_PATH = '/embed/'
+
+/* ── 호스트 쪽 상태 ─────────────────────────────────────────────────────── */
+const S = {
+  /** 게임 iframe. 열기 전에는 null. */
+  frame: null,
+  /** 이 게임에게만 보낸다. targetOrigin 으로 쓴다 ('*' 금지). */
+  gameOrigin: null,
+  /** 이번 경기의 세션 ID. INIT 부터 모든 메시지에 실린다. */
+  sessionId: null,
+  /** INIT 은 세션당 딱 한 번. 재전송 사고를 막는 자물쇠. */
+  initSent: false,
+  /** READY 도 한 번만 처리한다(새로고침 등으로 여러 번 올 수 있다). */
+  readyHandled: false,
+  /** 이미 처리한 결과 ID. 게임이 ACK 를 못 받아 재전송해도 두 번 반영하지 않는다. */
+  handledResultIds: new Set(),
+  /** 이번에 보낸 참가자 목록 — 결과의 ID 왕복 확인에 쓴다. */
+  sentParticipants: [],
+  state: 'idle',
+}
+
+let messageSeq = 0
+function createMessageId() {
+  messageSeq += 1
+  return 'h' + messageSeq.toString(36) + '_' + Math.floor(Math.random() * 0xffffff).toString(36)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   1단계 — 리스너를 **먼저** 붙인다.
+   iframe.src 를 넣기 전에 붙어 있어야 READY 를 놓치지 않는다.
+   ══════════════════════════════════════════════════════════════════════════ */
+window.addEventListener('message', onMessage)
+
+function onMessage(event) {
+  // ── 보안 검사 ① 보낸 사람의 출처가 우리가 연 게임의 출처와 정확히 같은가
+  if (!S.gameOrigin || event.origin !== S.gameOrigin) return
+  // ── 보안 검사 ② 정말 우리가 연 iframe 이 보낸 것인가 (다른 창·다른 프레임 차단)
+  if (!S.frame || event.source !== S.frame.contentWindow) return
+  // ── 보안 검사 ③ 우리 프로토콜의 모양인가 (다른 라이브러리 메시지와 섞이지 않게)
+  const msg = event.data
+  if (!msg || typeof msg !== 'object') return
+  if (msg.channel !== CHANNEL) return
+  if (typeof msg.type !== 'string' || typeof msg.messageId !== 'string') return
+  if (typeof msg.payload !== 'object' || msg.payload === null) return
+  if (msg.protocolVersion !== PROTOCOL_VERSION) {
+    logLine('sys', 'PROTOCOL', '프로토콜 버전이 다릅니다: ' + msg.protocolVersion + ' (이 예제는 ' + PROTOCOL_VERSION + ')')
+    return
+  }
+
+  logLine('in', msg.type, '', msg.payload)
+
+  switch (msg.type) {
+    case 'READY':     handleReady(msg); break
+    case 'INIT_ACK':  handleInitAck(msg); break
+    case 'PROGRESS':  handleProgress(msg); break
+    case 'COMPLETE':  handleComplete(msg); break
+    case 'CANCEL':    handleCancel(msg); break
+    case 'ERROR':     handleError(msg); break
+    default:          logLine('sys', '?', '모르는 메시지 종류라 무시했습니다: ' + msg.type)
+  }
+}
+
+/** 게임에게 보낸다. targetOrigin 은 항상 정확한 주소 — '*' 를 쓰지 않는다. */
+function post(type, payload) {
+  if (!S.frame || !S.frame.contentWindow || !S.gameOrigin) return
+  const message = {
+    channel: CHANNEL,
+    protocolVersion: PROTOCOL_VERSION,
+    type: type,
+    messageId: createMessageId(),
+    sessionId: S.sessionId,
+    payload: payload,
+  }
+  S.frame.contentWindow.postMessage(message, S.gameOrigin) // ← 정확한 origin
+  logLine('out', type, '', payload)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   메시지 처리
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function handleReady(msg) {
+  if (S.readyHandled) {
+    logLine('sys', 'READY', 'READY 를 또 받았지만 INIT 은 한 번만 보냅니다.')
+    return
+  }
+  S.readyHandled = true
+
+  const p = msg.payload
+  const okSchema = Array.isArray(p.supportedProtocolVersions)
+    ? p.supportedProtocolVersions.indexOf(PROTOCOL_VERSION) >= 0
+    : true
+  if (!okSchema) {
+    setState('error', '게임이 이 프로토콜 버전을 지원하지 않습니다.')
+    return
+  }
+  logLine('sys', 'READY', '엔진 ' + p.engineVersion + ' / 스키마 ' + p.schemaVersion +
+    ' / 기능 ' + (Array.isArray(p.capabilities) ? p.capabilities.length : 0) + '개')
+
+  // 3단계 — INIT 을 한 번만 보낸다.
+  if (S.initSent) return
+  const built = buildInput()
+  if (!built.ok) {
+    setState('error', built.message)
+    logLine('sys', 'INIT', '보내지 않았습니다: ' + built.message)
+    return
+  }
+  S.sentParticipants = built.input.participants.slice()
+  S.sessionId = built.input.sessionId
+  S.initSent = true
+  setState('init', 'INIT 보냄 — 게임의 확인을 기다립니다')
+  post('INIT', { input: built.input })
+}
+
+function handleInitAck(msg) {
+  const p = msg.payload
+  if (!p.accepted) {
+    const err = p.error || {}
+    setState('error', err.message || '게임이 입력을 거절했습니다.')
+    logLine('sys', 'INIT_ACK', '거절됨: ' + (err.code || '') + ' ' + (err.message || ''))
+    if (Array.isArray(err.details)) err.details.forEach(function (d) { logLine('sys', '상세', d) })
+    return
+  }
+  if (Array.isArray(p.warnings) && p.warnings.length) {
+    p.warnings.forEach(function (w) { logLine('sys', '조정됨', w) })
+  }
+  if (p.sessionId) S.sessionId = p.sessionId
+  setState('ready', '게임이 입력을 받아들였습니다')
+  setButtons({ start: true, pause: false, resume: false, cancel: true })
+
+  // 4단계 — START. (체크를 꺼 두면 START 버튼을 직접 눌러 보낼 수 있다)
+  if (document.getElementById('autoStart').checked) sendStart()
+}
+
+function sendStart() {
+  post('START', {})
+  setState('running', '경기 진행 중')
+  setButtons({ start: false, pause: true, resume: false, cancel: true })
+}
+
+function handleProgress(msg) {
+  const p = msg.payload
+  const sec = Math.max(0, Math.round((p.remainingMs || 0) / 1000))
+  const pct = Math.round((p.progress || 0) * 100)
+  document.getElementById('phaseText').textContent =
+    '단계 ' + String(p.phase) + ' · ' + p.completedCount + '/' + p.totalCount + '명'
+  document.getElementById('progressText').textContent = '남은 시간 ' + sec + '초 · ' + pct + '%'
+  if (p.phase === 'paused') setButtons({ start: false, pause: false, resume: true, cancel: true })
+  else if (p.phase === 'running') setButtons({ start: false, pause: true, resume: false, cancel: true })
+}
+
+function handleComplete(msg) {
+  const result = msg.payload && msg.payload.result
+  if (!result || typeof result.resultId !== 'string') {
+    logLine('sys', 'COMPLETE', '결과 모양이 이상해 무시했습니다.')
+    return
+  }
+
+  // 5단계 — 반드시 ACK. 이게 늦으면 게임이 COMPLETE 를 다시 보낸다.
+  post('COMPLETE_ACK', { resultId: result.resultId })
+
+  if (S.handledResultIds.has(result.resultId)) {
+    logLine('sys', 'COMPLETE', '이미 반영한 결과라 다시 저장하지 않았습니다. (재전송분)')
+    return
+  }
+  S.handledResultIds.add(result.resultId)
+
+  setState('finished', '경기 종료 — 결과를 받았습니다')
+  setButtons({ start: false, pause: false, resume: false, cancel: false })
+  document.getElementById('resultJson').textContent = JSON.stringify(result, null, 2)
+  renderRoundtrip(result)
+}
+
+function handleCancel(msg) {
+  setState('cancelled', '경기가 취소됐습니다 (결과 없음)')
+  setButtons({ start: false, pause: false, resume: false, cancel: false })
+  logLine('sys', 'CANCEL', '사유: ' + String(msg.payload && msg.payload.reason))
+}
+
+function handleError(msg) {
+  const p = msg.payload
+  setState('error', p.message || '게임에서 오류가 났습니다.')
+  if (Array.isArray(p.details)) p.details.forEach(function (d) { logLine('sys', '상세', d) })
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   게임 열기 / 닫기
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function openGame() {
+  closeGame(true)
+
+  const raw = document.getElementById('gameUrl').value.trim()
+  let origin
+  try {
+    origin = new URL(raw).origin
+  } catch (e) {
+    setState('error', '게임 주소가 올바르지 않습니다: ' + raw)
+    return
+  }
+  if (origin === 'null') {
+    setState('error', '게임 주소의 출처를 알 수 없습니다. http:// 또는 https:// 로 시작하는 주소를 넣어 주세요.')
+    return
+  }
+
+  const built = buildInput()
+  if (!built.ok) { setState('error', built.message); return }
+
+  S.gameOrigin = origin
+  S.initSent = false
+  S.readyHandled = false
+  S.handledResultIds = new Set()
+  S.sessionId = built.input.sessionId
+
+  // 임베드 주소를 만든다. 쿼리에는 **부모의 출처만** 넣는다 — 닉네임은 절대 넣지 않는다.
+  const url = new URL(EMBED_PATH, origin + '/')
+  url.searchParams.set(PARENT_ORIGIN_QUERY_KEY, window.location.origin)
+
+  const frame = document.createElement('iframe')
+  frame.title = '브릭픽 게임 화면'
+  frame.allow = 'fullscreen; autoplay'
+  // sandbox 는 일부러 걸지 않았다. 걸어야 한다면 최소한
+  //   sandbox="allow-scripts allow-same-origin allow-fullscreen"
+  // 가 필요하다(allow-same-origin 이 없으면 게임의 origin 이 null 이 되어 연동이 끊긴다).
+  frame.setAttribute('referrerpolicy', 'no-referrer')
+
+  // 2단계 — 리스너가 이미 붙은 뒤에 src 를 넣는다.
+  document.getElementById('placeholder').style.display = 'none'
+  document.getElementById('frameBox').appendChild(frame)
+  S.frame = frame
+  frame.src = url.toString()
+
+  logLine('sys', '열기', url.toString())
+  logLine('sys', '부모 출처', window.location.origin + ' — 게임의 허용 목록에 이 주소가 있어야 합니다.')
+  setState('opening', 'READY 를 기다리는 중')
+  document.getElementById('closeGame').disabled = false
+  setButtons({ start: false, pause: false, resume: false, cancel: true })
+}
+
+function closeGame(quiet) {
+  if (S.frame && S.frame.parentNode) S.frame.parentNode.removeChild(S.frame)
+  S.frame = null
+  S.gameOrigin = null
+  S.initSent = false
+  S.readyHandled = false
+  document.getElementById('placeholder').style.display = ''
+  document.getElementById('closeGame').disabled = true
+  setButtons({ start: false, pause: false, resume: false, cancel: false })
+  if (!quiet) {
+    setState('idle', '')
+    logLine('sys', '닫기', '게임 화면을 닫았습니다.')
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   입력 데이터 만들기 — 코드 모듈 방식(mountBrickPick)과 **완전히 같은 모양**이다.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function buildInput() {
+  const participants = []
+  const excluded = []
+  const rows = document.querySelectorAll('#peopleBody tr')
+  const seen = {}
+  for (let i = 0; i < rows.length; i += 1) {
+    const id = rows[i].querySelector('.p-id').value.trim()
+    const nickname = rows[i].querySelector('.p-nick').value.trim()
+    if (!id && !nickname) continue
+    if (!id) return { ok: false, message: (i + 1) + '번째 줄에 참가자 ID 가 없습니다.' }
+    if (!nickname) return { ok: false, message: (i + 1) + '번째 줄에 닉네임이 없습니다.' }
+    if (seen[id]) return { ok: false, message: '참가자 ID 가 중복됩니다: ' + id }
+    seen[id] = true
+    participants.push({ id: id, nickname: nickname })
+    if (rows[i].querySelector('.p-ex').checked) excluded.push(id)
+  }
+  if (participants.length === 0) return { ok: false, message: '참가자를 한 명 이상 입력해 주세요.' }
+
+  const rule = buildRule()
+  if (!rule.ok) return rule
+
+  const sessionInput = document.getElementById('sessionId')
+  if (!sessionInput.value.trim()) sessionInput.value = defaultSessionId()
+
+  return {
+    ok: true,
+    input: {
+      schemaVersion: SCHEMA_VERSION,
+      sessionId: sessionInput.value.trim(),
+      participants: participants,
+      mode: document.querySelector('input[name="mode"]:checked').value,
+      difficulty: document.getElementById('difficulty').value,
+      roundDurationMs: Number(document.getElementById('duration').value),
+      selectionRule: rule.value,
+      excludedParticipantIds: excluded,
+      seed: document.getElementById('seed').value.trim() || 'BRICKPICK',
+      locale: 'ko',
+      soundEnabled: document.getElementById('soundEnabled').checked,
+      reducedMotion: document.getElementById('reducedMotion').checked,
+      // 호스트(이 화면)가 참가자와 설정을 이미 관리하므로 게임 안의 편집기는 숨긴다.
+      hideParticipantEditor: true,
+      replayOf: null,
+    },
+  }
+}
+
+function buildRule() {
+  const preset = document.getElementById('rulePreset').value
+  const raw = document.getElementById('ruleValue').value.trim()
+  if (preset === 'best')   return { ok: true, value: { kind: 'top', count: 1 } }
+  if (preset === 'worst')  return { ok: true, value: { kind: 'bottom', count: 1 } }
+  if (preset === 'rank') {
+    const n = parseInt(raw, 10)
+    if (!(n >= 1)) return { ok: false, message: '지정 순위는 1 이상의 숫자여야 합니다.' }
+    return { ok: true, value: { kind: 'ranks', ranks: [n] } }
+  }
+  if (preset === 'topN' || preset === 'bottomN') {
+    const n = parseInt(raw, 10)
+    if (!(n >= 1)) return { ok: false, message: '인원 수는 1 이상의 숫자여야 합니다.' }
+    return { ok: true, value: { kind: preset === 'topN' ? 'top' : 'bottom', count: n } }
+  }
+  const ranks = raw.split(/[,\s]+/).map(function (s) { return parseInt(s, 10) })
+    .filter(function (n) { return n >= 1 })
+  if (ranks.length === 0) return { ok: false, message: '지정할 순위를 하나 이상 적어 주세요. 예) 2, 5, 8' }
+  return { ok: true, value: { kind: 'ranks', ranks: ranks } }
+}
+
+function defaultSessionId() {
+  const d = new Date()
+  const pad = function (n) { return String(n).padStart(2, '0') }
+  return 'demo-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) +
+    '-' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds())
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   화면 그리기
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const STATE_LABELS = {
+  idle:      ['준비 전',     'idle'],
+  opening:   ['게임 여는 중', 'wait'],
+  init:      ['설정 전달 중', 'wait'],
+  ready:     ['시작 대기',    'wait'],
+  running:   ['진행 중',      'live'],
+  finished:  ['완료',         'done'],
+  cancelled: ['취소됨',       'stop'],
+  error:     ['오류',         'stop'],
+}
+
+function setState(state, note) {
+  S.state = state
+  const pair = STATE_LABELS[state] || ['?', 'idle']
+  const badge = document.getElementById('stateBadge')
+  badge.textContent = pair[0]
+  badge.setAttribute('data-tone', pair[1])
+  if (note) {
+    document.getElementById('phaseText').textContent = note
+    logLine('sys', '상태', pair[0] + ' — ' + note)
+  }
+}
+
+function setButtons(on) {
+  document.getElementById('btnStart').disabled  = !on.start
+  document.getElementById('btnPause').disabled  = !on.pause
+  document.getElementById('btnResume').disabled = !on.resume
+  document.getElementById('btnCancel').disabled = !on.cancel
+}
+
+const DIR_LABEL = { out: '→ 보냄', in: '← 받음', sys: '⚙ 내부' }
+
+function logLine(dir, type, note, payload) {
+  const box = document.getElementById('log')
+  const el = document.createElement('div')
+  el.className = 'entry'
+  el.setAttribute('data-dir', dir)
+
+  const head = document.createElement('div')
+  head.className = 'head'
+  const t = document.createElement('span'); t.className = 't'
+  t.textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false })
+  const d = document.createElement('span'); d.className = 'dir'; d.textContent = DIR_LABEL[dir]
+  const ty = document.createElement('span'); ty.className = 'ty'; ty.textContent = type
+  const nt = document.createElement('span'); nt.className = 'note'; nt.textContent = note || ''
+  head.appendChild(t); head.appendChild(d); head.appendChild(ty); head.appendChild(nt)
+  el.appendChild(head)
+
+  if (payload !== undefined) {
+    const pre = document.createElement('pre')
+    let text
+    try { text = JSON.stringify(payload) } catch (e) { text = String(payload) }
+    if (text && text.length > 900) text = text.slice(0, 900) + ' … (줄임)'
+    pre.textContent = text
+    el.appendChild(pre)
+  }
+
+  box.appendChild(el)
+  while (box.childNodes.length > 250) box.removeChild(box.firstChild)
+  box.scrollTop = box.scrollHeight
+}
+
+/** 핵심 검증 — 보낸 ID 와 돌아온 ID 를 글자 그대로 대조한다. */
+function renderRoundtrip(result) {
+  const box = document.getElementById('roundtrip')
+  box.textContent = ''
+
+  const title = document.createElement('div')
+  title.innerHTML = '<b>ID 왕복 확인</b>'
+  box.appendChild(title)
+
+  const selected = Array.isArray(result.selectedParticipantIds) ? result.selectedParticipantIds : []
+  const sentIds = S.sentParticipants.map(function (p) { return p.id })
+  const nickById = {}
+  S.sentParticipants.forEach(function (p) { nickById[p.id] = p.nickname })
+
+  const allBack = selected.length > 0 && selected.every(function (id) { return sentIds.indexOf(id) >= 0 })
+  const verdict = document.createElement('div')
+  verdict.className = 'verdict ' + (allBack ? 'ok' : 'bad')
+  verdict.textContent = selected.length === 0
+    ? '✘ 선정된 참가자가 없습니다 — 규칙과 제외 목록을 확인하세요.'
+    : (allBack
+        ? '✔ 통과 — 선정된 ID ' + selected.length + '개가 모두 우리가 보낸 ID 와 글자까지 같습니다.'
+        : '✘ 실패 — 우리가 보내지 않은 ID 가 결과에 있습니다. 연동을 점검하세요.')
+  box.appendChild(verdict)
+
+  const table = document.createElement('table')
+  const thead = document.createElement('tr')
+  ;['#', '돌아온 ID', '보낸 명단에 있나', '닉네임', '후보 순위'].forEach(function (h) {
+    const th = document.createElement('th'); th.textContent = h; thead.appendChild(th)
+  })
+  table.appendChild(thead)
+
+  const reasonById = {}
+  ;(result.selectionReasons || []).forEach(function (r) { reasonById[r.participantId] = r })
+
+  selected.forEach(function (id, i) {
+    const tr = document.createElement('tr')
+    const known = sentIds.indexOf(id) >= 0
+    const r = reasonById[id]
+    const cells = [
+      String(i + 1),
+      id,
+      known ? '✔ 있음' : '✘ 없음',
+      known ? nickById[id] : '—',
+      r ? r.eligibleRank + '위' : '—',
+    ]
+    cells.forEach(function (text, ci) {
+      const td = document.createElement('td')
+      td.textContent = text
+      if (ci === 2) td.className = 'verdict ' + (known ? 'ok' : 'bad')
+      tr.appendChild(td)
+    })
+    table.appendChild(tr)
+  })
+  box.appendChild(table)
+
+  const why = document.createElement('p')
+  why.className = 'hint'
+  why.textContent = '선정 근거: ' +
+    ((result.selectionReasons || []).map(function (r) { return r.nickname + ' — ' + r.reason }).join(' / ') || '없음')
+  box.appendChild(why)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   참가자 표
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const SAMPLE = [
+  ['stu-2026-001', '김하늘'],
+  ['stu-2026-002', '이도윤'],
+  ['stu-2026-003', '박서연'],
+  ['stu-2026-004', '최준우'],
+  ['stu-2026-005', '정예은'],
+  ['stu-2026-006', '한지호'],
+]
+
+function addPersonRow(id, nickname, excludedChecked) {
+  const tbody = document.getElementById('peopleBody')
+  const tr = document.createElement('tr')
+
+  const tdNum = document.createElement('td'); tdNum.className = 'num'
+  const tdId = document.createElement('td')
+  const tdNick = document.createElement('td')
+  const tdEx = document.createElement('td'); tdEx.className = 'ex'
+  const tdDel = document.createElement('td'); tdDel.className = 'del'
+
+  const inId = document.createElement('input')
+  inId.type = 'text'; inId.className = 'p-id mono'; inId.value = id || ''
+  inId.placeholder = '학번 등'
+  inId.setAttribute('aria-label', '참가자 ID')
+
+  const inNick = document.createElement('input')
+  inNick.type = 'text'; inNick.className = 'p-nick'; inNick.value = nickname || ''
+  inNick.placeholder = '이름'
+  inNick.setAttribute('aria-label', '닉네임')
+
+  const inEx = document.createElement('input')
+  inEx.type = 'checkbox'; inEx.className = 'p-ex'; inEx.checked = !!excludedChecked
+  inEx.setAttribute('aria-label', '이 참가자를 선정에서 제외')
+
+  const del = document.createElement('button')
+  del.type = 'button'; del.className = 'tiny ghost'; del.textContent = '×'
+  del.setAttribute('aria-label', '이 줄 삭제')
+  del.onclick = function () { tr.parentNode.removeChild(tr); renumber() }
+
+  tdId.appendChild(inId); tdNick.appendChild(inNick); tdEx.appendChild(inEx); tdDel.appendChild(del)
+  tr.appendChild(tdNum); tr.appendChild(tdId); tr.appendChild(tdNick); tr.appendChild(tdEx); tr.appendChild(tdDel)
+  tbody.appendChild(tr)
+  renumber()
+}
+
+function renumber() {
+  const rows = document.querySelectorAll('#peopleBody tr')
+  for (let i = 0; i < rows.length; i += 1) rows[i].querySelector('.num').textContent = String(i + 1)
+  document.getElementById('peopleCount').textContent = '(' + rows.length + '명)'
+}
+
+function fillSample() {
+  document.getElementById('peopleBody').textContent = ''
+  SAMPLE.forEach(function (p) { addPersonRow(p[0], p[1], false) })
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   선정 규칙 미리보기
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function updateRuleUI() {
+  const preset = document.getElementById('rulePreset').value
+  const box = document.getElementById('ruleValueBox')
+  const label = document.getElementById('ruleValueLabel')
+  const input = document.getElementById('ruleValue')
+
+  if (preset === 'best' || preset === 'worst') {
+    box.style.display = 'none'
+  } else {
+    box.style.display = ''
+    if (preset === 'rank')  { label.textContent = '몇 위를 뽑을까요';  input.placeholder = '3' }
+    if (preset === 'topN')  { label.textContent = '상위 몇 명';        input.placeholder = '2' }
+    if (preset === 'bottomN'){ label.textContent = '하위 몇 명';       input.placeholder = '2' }
+    if (preset === 'ranks') { label.textContent = '순위 목록 (쉼표)';  input.placeholder = '2, 5, 8' }
+  }
+
+  const rule = buildRule()
+  const preview = document.getElementById('rulePreview')
+  preview.textContent = rule.ok
+    ? '보낼 규칙: ' + JSON.stringify(rule.value)
+    : '⚠ ' + rule.message
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   연결
+   ══════════════════════════════════════════════════════════════════════════ */
+
+document.getElementById('addPerson').onclick = function () { addPersonRow('', '', false) }
+document.getElementById('fillSample').onclick = fillSample
+document.getElementById('openGame').onclick = openGame
+document.getElementById('closeGame').onclick = function () { closeGame(false) }
+document.getElementById('clearLog').onclick = function () { document.getElementById('log').textContent = '' }
+
+document.getElementById('btnStart').onclick  = sendStart
+document.getElementById('btnPause').onclick  = function () {
+  post('PAUSE', {}); setButtons({ start: false, pause: false, resume: true, cancel: true })
+}
+document.getElementById('btnResume').onclick = function () {
+  post('RESUME', {}); setButtons({ start: false, pause: true, resume: false, cancel: true })
+}
+document.getElementById('btnCancel').onclick = function () { post('CANCEL', { reason: 'host' }) }
+
+document.getElementById('rulePreset').onchange = updateRuleUI
+document.getElementById('ruleValue').oninput = updateRuleUI
+
+// 라디오 칩의 눌린 모양 유지
+document.getElementById('modeChips').addEventListener('change', function () {
+  const chips = document.querySelectorAll('#modeChips .chip')
+  for (let i = 0; i < chips.length; i += 1) {
+    chips[i].classList.toggle('on', chips[i].querySelector('input').checked)
+  }
+})
+
+// file:// 로 열면 출처가 null 이라 연동이 안 된다 — 미리 알려 준다.
+if (window.location.protocol === 'file:') {
+  document.getElementById('fileWarn').style.display = 'block'
+}
+
+fillSample()
+document.getElementById('sessionId').value = defaultSessionId()
+updateRuleUI()
+logLine('sys', '준비', '리스너를 먼저 붙였습니다. 이제 게임을 열어도 READY 를 놓치지 않습니다.')
+</script>
+</body>
+</html>

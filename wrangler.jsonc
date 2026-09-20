@@ -1,0 +1,52 @@
+{
+  // ────────────────────────────────────────────────────────────────────────
+  // 브릭픽 BrickPick — Cloudflare Workers Static Assets 배포 설정 (1순위 배포)
+  //
+  // 이 설정은 "정적 파일만 올리는" 형태다. Worker 스크립트(main)를 두지 않는다.
+  //   · 요청마다 우리 코드가 도는 게 아니라, Cloudflare 가 dist/ 의 파일을 바로 내려준다.
+  //   · 그래서 느려질 일도, 요금이 늘어날 일도, 우리가 만든 버그가 낄 자리도 없다.
+  //
+  // 배포 방법
+  //   npm run build:app      → dist/ 를 만든다
+  //   npx wrangler deploy    → dist/ 를 올린다   (= npm run deploy:workers)
+  //
+  // 헤더(보안·iframe 허용 목록)는 이 파일이 아니라 public/_headers 에 적는다.
+  // public/ 안의 파일은 빌드할 때 dist/ 로 그대로 복사되므로, 배포하면 같이 올라간다.
+  // ────────────────────────────────────────────────────────────────────────
+
+  // wrangler 가 읽는 스키마. 편집기에서 오타·잘못된 키를 바로 잡아 준다.
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // 배포 이름. Cloudflare 대시보드와 기본 주소(brickpick.<계정>.workers.dev)에 쓰인다.
+  "name": "brickpick",
+
+  // Cloudflare 런타임의 동작 기준 날짜. 올리면 런타임이 최신 규칙을 쓴다.
+  // 정적 자산만 올리는 배포라 동작 차이는 거의 없지만, 없으면 배포가 거절된다.
+  "compatibility_date": "2025-01-01",
+
+  // main 을 **일부러 두지 않았다.** main 을 적는 순간 Worker 스크립트 배포가 되고,
+  // 정적 파일 요청에도 우리 코드가 끼어든다. 같은 이유로 run_worker_first 도 쓰지 않는다.
+
+  "assets": {
+    // 올릴 폴더. 앱 빌드 출력이다(vite.config.ts 의 build.outDir).
+    // 라이브러리 출력 dist-lib/ 는 npm 패키지용이라 여기에 올리지 않는다.
+    "directory": "./dist",
+
+    // 주소 → 파일 찾는 방식. "auto-trailing-slash" 는 wrangler 기본값이며,
+    // /embed/ 와 /embed 를 둘 다 dist/embed/index.html 로 이어 준다.
+    // (임베드 주소가 슬래시 하나 때문에 404 가 되는 사고를 막는다.)
+    "html_handling": "auto-trailing-slash",
+
+    // 없는 주소를 만났을 때. "404-page" 는 dist/404.html 을 404 상태로 돌려준다.
+    // "single-page-application" 을 쓰면 안 된다 — 브릭픽은 SPA 라우터가 없고
+    // 진입점이 / 와 /embed/ 둘뿐이라, 오타 주소(/embedd)가 조용히 앱을 열어 버린다.
+    "not_found_handling": "404-page"
+
+    // binding 은 적지 않는다. 자산을 코드에서 읽을 때 쓰는 값인데 Worker 가 없다.
+  },
+
+  // 배포 로그·오류를 Cloudflare 대시보드에서 보려면 켠다. 개인정보는 남기지 않는다.
+  "observability": {
+    "enabled": true
+  }
+}

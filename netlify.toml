@@ -1,0 +1,73 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  브릭픽 BrickPick — Netlify 배포 설정 (외부 대체 배포)
+#
+#  1순위는 Cloudflare Workers Static Assets(wrangler.jsonc)다.
+#  이 파일은 학교·기관 사정으로 Cloudflare 를 못 쓸 때를 위한 대체 경로다.
+#
+#  Netlify 는 dist/_headers 도 함께 읽는다(public/_headers 가 복사된 것).
+#  그래도 아래 [[headers]] 에 같은 내용을 한 번 더 적어 둔다 —
+#  _headers 를 못 찾는 설정 실수가 있어도 보안 헤더가 빠지지 않게 하기 위해서다.
+#  둘이 겹치면 Netlify 는 이 파일(netlify.toml)을 우선한다.
+#
+#  ▣ 수업 앱 주소는 아래 frame-ancestors 목록에 적는다. 모든 출처를 허용하지 마라.
+#  ▣ X-Frame-Options 는 일부러 넣지 않았다 — 다른 주소의 수업 앱이 iframe 으로
+#    게임을 열지 못하게 된다. 허용 목록이 되는 CSP frame-ancestors 만 쓴다.
+# ════════════════════════════════════════════════════════════════════════════
+
+[build]
+  # 앱만 빌드한다. 라이브러리(dist-lib)는 npm 패키지용이라 배포에 올리지 않는다.
+  command = "npm run build:app"
+  # 올릴 폴더. vite.config.ts 의 build.outDir 과 같아야 한다.
+  publish = "dist"
+
+[build.environment]
+  # .nvmrc 와 같은 값을 유지한다.
+  NODE_VERSION = "22"
+  # devDependencies(vite 등)가 있어야 빌드가 되므로 production 설치로 줄이지 않는다.
+  NPM_FLAGS = "--include=dev"
+
+# 리다이렉트는 넣지 않는다.
+# /* → /index.html 같은 SPA 리다이렉트를 넣으면 오타 주소(/embedd)가 조용히 앱을 열고,
+# /embed/ 가 독립 실행 화면으로 바뀌어 버린다. 브릭픽은 진입점이 / 와 /embed/ 둘인
+# 멀티페이지 정적 사이트다.
+
+# ── 전역 헤더 ───────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self)"
+
+# ── 임베드 진입점: iframe 으로 열 수 있는 주소 ──────────────────────────────
+# ▼▼▼ 운영 목록 — 실제로 쓰는 수업 앱 주소만 이 값에 적는다 ▼▼▼
+# 여러 개면 공백으로 이어 쓴다:
+#   "frame-ancestors 'self' https://lesson.example.com https://class.example.org"
+[[headers]]
+  for = "/embed/*"
+  [headers.values]
+    Content-Security-Policy = "frame-ancestors 'self' https://lesson.example.com"
+    # 임베드 진입점은 HTML 한 장뿐이다. 새로 배포하면 바로 반영돼야 한다.
+    Cache-Control = "no-cache"
+
+# 개발용 허용은 운영 목록과 섞지 않는다.
+# 로컬 확인이 필요하면 아래 블록의 # 를 떼고 쓰되, 배포 전에 반드시 다시 붙인다.
+#
+# [[headers]]
+#   for = "/embed/*"
+#   [headers.values]
+#     Content-Security-Policy = "frame-ancestors 'self' http://localhost:5173 http://127.0.0.1:5173"
+
+# ── 캐시 ────────────────────────────────────────────────────────────────────
+# 빌드가 파일 이름에 해시를 붙이므로 오래 캐시해도 안전하다.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# HTML 은 캐시하지 않는다. 새로 배포하면 바로 반영돼야 한다.
+# (/embed/* 는 위에서 이미 no-cache 를 받았다.)
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
