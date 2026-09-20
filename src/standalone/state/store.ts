@@ -258,6 +258,75 @@ export function clearAllStoredData(): void {
   removeKey(KEY_ROSTER)
   removeKey(KEY_RESULT)
   removeKey(KEY_PREFS)
+  removeKey(KEY_PRACTICE)
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 혼자 연습하기 — 최고 기록
+//
+// 이 기기에만 남는 **내 점수**다. 외부로 나가지 않고, 참가자 명단·발표자 선정과
+// 아무 관계가 없다. "이 기기에 저장한 내용 모두 지우기" 로 함께 지워진다.
+// ────────────────────────────────────────────────────────────────────────────
+
+const KEY_PRACTICE = `${STORAGE_PREFIX}practiceBest`
+
+export interface PracticeBest {
+  /** 최고 점수. */
+  score: number
+  /** 벽돌을 다 깼다면 그 시각(ms). 못 깼으면 null. */
+  clearedAtMs: number | null
+  /** 언제 세운 기록인지 (ISO). */
+  at: string
+}
+
+/** 설정이 다르면 다른 기록이다 — 난이도·경기 방식·시간이 같아야 비교가 의미 있다. */
+export function practiceKey(
+  difficulty: DifficultyPreset,
+  roundMode: RoundMode,
+  roundDurationMs: number,
+): string {
+  return `${difficulty}|${roundMode}|${roundDurationMs}`
+}
+
+export function loadPracticeBests(): Record<string, PracticeBest> {
+  const saved = readJson<Record<string, PracticeBest>>(KEY_PRACTICE)
+  return saved && typeof saved === 'object' ? saved : {}
+}
+
+/**
+ * 이번 기록이 최고 기록이면 저장하고 true 를 돌려준다.
+ *
+ * "다 깰 때까지" 에서는 **빨리 깬 쪽이 더 좋은 기록**이다(점수는 다 깨면 같아지므로).
+ * 그 밖에는 점수가 높은 쪽이다.
+ */
+export function savePracticeBest(
+  key: string,
+  record: { score: number; clearedAtMs: number | null },
+  byClearTime: boolean,
+): boolean {
+  const all = loadPracticeBests()
+  const prev = all[key]
+  let better: boolean
+  if (!prev) better = true
+  else if (byClearTime) {
+    const a = record.clearedAtMs
+    const b = prev.clearedAtMs
+    if (a !== null && b !== null) better = a < b
+    else if (a !== null) better = true // 처음으로 다 깼다
+    else if (b !== null) better = false
+    else better = record.score > prev.score // 둘 다 못 깼으면 점수로
+  } else {
+    better = record.score > prev.score
+  }
+  if (!better) return false
+  all[key] = { score: record.score, clearedAtMs: record.clearedAtMs, at: new Date().toISOString() }
+  writeJson(KEY_PRACTICE, all)
+  return true
+}
+
+/** 연습 기록만 지운다. */
+export function clearPracticeBests(): void {
+  removeKey(KEY_PRACTICE)
 }
 
 // ────────────────────────────────────────────────────────────────────────────

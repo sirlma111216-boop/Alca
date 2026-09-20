@@ -1,0 +1,104 @@
+/* 혼자 연습하기 — bp-prac- 접두사만 쓴다. */
+
+/* 경기 중 상단 얇은 줄. 게임판이 화면의 중심이 되도록 최소한만 둔다. */
+.bp-prac-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bp-line, #1e2b52);
+  background: var(--bp-panel, #0b1226);
+}
+.bp-prac-top__title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.bp-prac-top__meta {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--bp-text-dim, #8ea0c9);
+  overflow-wrap: anywhere;
+}
+.bp-prac-stage {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 결과 카드 */
+.bp-prac-result {
+  margin: 0 0 18px;
+  padding: 22px 20px;
+  text-align: center;
+  border: 1px solid var(--bp-line, #1e2b52);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.09), rgba(11, 18, 38, 0.2));
+}
+.bp-prac-result.is-best {
+  border-color: var(--bp-accent-warm, #fbbf24);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.14), rgba(11, 18, 38, 0.2));
+}
+.bp-prac-result__badge {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--bp-accent-warm, #fbbf24);
+}
+.bp-prac-result__score {
+  margin: 0;
+  font-size: clamp(30px, 8vw, 44px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+.bp-prac-result__sub {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--bp-text-dim, #8ea0c9);
+}
+
+.bp-prac-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bp-prac-facts li {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: rgba(17, 28, 58, 0.6);
+}
+.bp-prac-facts span {
+  font-size: 12px;
+  color: var(--bp-text-dim, #8ea0c9);
+}
+.bp-prac-facts strong {
+  font-size: 17px;
+}
+
+/* 최고 기록 */
+.bp-prac-best {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+}
+.bp-prac-best__label {
+  font-size: 13px;
+  color: var(--bp-text-dim, #8ea0c9);
+}
+.bp-prac-best__value {
+  font-size: 19px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-prac-result {
+    transition: none;
+  }
+}

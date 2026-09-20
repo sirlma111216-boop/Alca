@@ -17,8 +17,9 @@ import { SelectionScreen } from './screens/SelectionScreen'
 import { SummaryScreen } from './screens/SummaryScreen'
 import { HostLiveScreen } from './screens/HostLiveScreen'
 import { StudentJoinScreen } from './screens/StudentJoinScreen'
+import { PracticeScreen } from './screens/PracticeScreen'
 import { clearAllStoredData, useStandaloneStore } from './state/store'
-import { readCodeFromUrl } from '../live/types'
+import { readCodeFromUrl, isPracticeUrl } from '../live/types'
 import type { AppMode } from '../live/types'
 
 /**
@@ -27,7 +28,9 @@ import type { AppMode } from '../live/types'
  */
 function initialAppMode(): AppMode {
   if (typeof window === 'undefined') return 'solo'
-  return readCodeFromUrl(window.location.href) ? 'student' : 'solo'
+  if (readCodeFromUrl(window.location.href)) return 'student'
+  if (isPracticeUrl(window.location.href)) return 'practice'
+  return 'solo'
 }
 
 export function App() {
@@ -40,8 +43,9 @@ export function App() {
     setAppMode('solo')
     try {
       const url = new URL(window.location.href)
-      if (url.searchParams.has('code')) {
+      if (url.searchParams.has('code') || url.searchParams.has('practice')) {
         url.searchParams.delete('code')
+        url.searchParams.delete('practice')
         window.history.replaceState(null, '', url.toString())
       }
     } catch {
@@ -51,6 +55,14 @@ export function App() {
 
   if (appMode === 'student') {
     return <StudentJoinScreen initialCode={readCodeFromUrl(window.location.href)} onExit={backToSolo} />
+  }
+
+  if (appMode === 'practice') {
+    return (
+      <div className="bp-app">
+        <PracticeScreen prefs={state.prefs} onExit={backToSolo} />
+      </div>
+    )
   }
 
   if (appMode === 'host') {
@@ -125,8 +137,18 @@ export function App() {
             >
               나는 학생입니다 (수업 코드 입력)
             </button>
+            <button
+              type="button"
+              className="bpx-btn bpx-btn--ghost"
+              onClick={() => setAppMode('practice')}
+            >
+              혼자 연습하기
+            </button>
           </div>
           <p className="bp-modepick__note">
+            <strong>혼자 연습하기</strong>는 설정 없이 바로 한 판 하는 것입니다 — 발표자를 뽑지
+            않습니다.
+            <br />
             아래 방식은 <strong>교사 기기 한 대</strong>로 끝냅니다 — 닉네임을 직접 입력하고
             자동 경기로 뽑거나, 한 명씩 차례로 플레이합니다. 인터넷 연결이 없어도 됩니다.
           </p>

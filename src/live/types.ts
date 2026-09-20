@@ -17,6 +17,8 @@ export type AppMode =
   | 'host'
   /** 학생이 수업 코드로 참여 */
   | 'student'
+  /** 들어온 사람이 설정 없이 바로 한 판 — 발표자 선정과 무관하다 */
+  | 'practice'
 
 /** 교사가 실시간 경기를 시작할 때 정하는 것. */
 export interface LiveMatchSetup {
@@ -78,4 +80,22 @@ export function readCodeFromUrl(href: string): string | null {
 export function buildJoinUrl(origin: string, code: string): string {
   const base = origin.replace(/\/+$/, '')
   return `${base}/?code=${encodeURIComponent(code)}`
+}
+
+/**
+ * 주소에 ?practice=1 이 있으면 곧장 연습 화면으로 보낸다.
+ * 학생에게 "이 주소로 연습해 보세요" 하고 링크 하나만 주면 되도록 한 것이다.
+ */
+export function isPracticeUrl(href: string): boolean {
+  try {
+    const v = new URL(href).searchParams.get('practice')
+    return v === '1' || v === 'true' || v === 'yes'
+  } catch {
+    return false
+  }
+}
+
+/** 연습 링크. QR 이나 칠판에 적어 주기 좋다. */
+export function buildPracticeUrl(origin: string): string {
+  return `${origin.replace(/\/+$/, '')}/?practice=1`
 }
