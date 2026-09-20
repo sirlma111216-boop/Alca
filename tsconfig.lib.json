@@ -12,6 +12,9 @@
   "exclude": [
     "src/standalone/**",
     "src/embed/**",
+    // 실시간 참여는 단독 실행 화면 전용이다. npm 패키지에 WebSocket 코드가 딸려가지 않게 뺀다.
+    // (worker/protocol 의 타입을 import 하는데 그건 rootDir(src) 밖이기도 하다)
+    "src/live/**",
     "dist",
     "dist-lib",
     "node_modules",

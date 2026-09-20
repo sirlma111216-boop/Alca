@@ -1,0 +1,20 @@
+{
+  // Worker 는 브라우저가 아니라 Cloudflare 런타임에서 돈다.
+  // DOM 타입 대신 workers-types 를 쓰고, 앱 tsconfig 와 분리한다.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/workers-types"],
+
+    "strict": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  },
+  "include": ["worker"]
+}

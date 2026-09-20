@@ -41,14 +41,15 @@
     "build:types": "tsc -p tsconfig.lib.json",
     "preview": "vite preview",
     "serve:dist": "node scripts/static-server.mjs dist 4178",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify": "npm run typecheck && npm run test && npm run build",
     "pack:lib": "npm run build:lib && npm pack --pack-destination ./dist-pack",
     "test:integration": "node scripts/verify-package-install.mjs",
     "deploy:workers": "npm run build:app && wrangler deploy",
-    "deploy:pages": "npm run build:app && wrangler pages deploy dist --project-name brickpick"
+    "deploy:pages": "npm run build:app && wrangler pages deploy dist --project-name brickpick",
+    "verify:live": "node scripts/verify-live.mjs"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -63,7 +64,9 @@
     }
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260920.1",
     "@types/node": "^22.20.4",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -74,5 +77,8 @@
     "vite": "^5.4.11",
     "vitest": "^2.1.8",
     "wrangler": "^4.135.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
   }
 }

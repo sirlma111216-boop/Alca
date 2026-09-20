@@ -1,0 +1,415 @@
+/*
+ * 실시간 참여 화면 스타일 (교사 화면 · 학생 화면 공용).
+ *
+ * 규칙
+ *  - 모든 새 클래스는 bp-live- 로 시작한다. 기존 화면의 클래스는 건드리지 않는다.
+ *  - 색은 standalone.css 가 :root 에 깔아 둔 변수만 쓴다.
+ *  - 상태를 색으로만 알리지 않는다 — 글자와 굵기를 함께 쓴다.
+ *  - 교실 뒤에서 보여야 하는 것(수업 코드·인원 수)은 아주 크게.
+ */
+
+/* ───────────────────────────── 끊김 띠 ───────────────────────────── */
+
+.bp-live-banner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-block: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--bp-accent-warm);
+  border-left-width: 5px;
+  border-radius: var(--bp-radius);
+  background: color-mix(in srgb, var(--bp-accent-warm) 12%, var(--bp-panel));
+  color: var(--bp-text);
+  font-size: var(--bp-fs-sm);
+  line-height: 1.55;
+}
+
+.bp-live-banner__mark {
+  font-size: 1.4em;
+  line-height: 1;
+}
+
+/* ───────────────────────────── 수업 코드 ───────────────────────────── */
+
+.bp-live-code {
+  margin: 4px 0 14px;
+  font-family: var(--bp-font-numeric);
+  font-size: clamp(56px, 13vw, 168px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: var(--bp-text-strong);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--bp-accent) 45%, transparent);
+  word-break: break-all;
+}
+
+.bp-live-bigbtn {
+  font-size: var(--bp-fs-lg);
+  padding: 14px 26px;
+}
+
+/* ───────────────────────────── 참여 주소 ───────────────────────────── */
+
+.bp-live-join {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-gap);
+  align-items: flex-start;
+}
+
+.bp-live-qr {
+  flex: 0 0 auto;
+  padding: 10px;
+  border-radius: var(--bp-radius);
+  background: #ffffff;
+  line-height: 0;
+}
+
+.bp-live-qr__canvas {
+  display: block;
+  width: clamp(160px, 26vw, 260px);
+  height: auto;
+}
+
+.bp-live-qr__fallback {
+  margin: 8px 0 0;
+  color: #1a2340;
+  font-size: var(--bp-fs-sm);
+  line-height: 1.5;
+}
+
+.bp-live-join__text {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.bp-live-join__label {
+  margin: 0 0 4px;
+  color: var(--bp-text-dim);
+  font-size: var(--bp-fs-sm);
+}
+
+.bp-live-url {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel-raised);
+  font-family: var(--bp-font-numeric);
+  font-size: var(--bp-fs-lg);
+  color: var(--bp-text-strong);
+  word-break: break-all;
+}
+
+/* ───────────────────────────── 최근에 연 수업 ───────────────────────────── */
+
+.bp-live-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.bp-live-recent__row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.bp-live-recent__code {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+  color: var(--bp-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.bp-live-recent__code:hover,
+.bp-live-recent__code:focus-visible {
+  border-color: var(--bp-accent);
+}
+
+.bp-live-recent__text {
+  font-family: var(--bp-font-numeric);
+  font-size: var(--bp-fs-lg);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--bp-text-strong);
+}
+
+.bp-live-recent__when {
+  color: var(--bp-text-dim);
+  font-size: var(--bp-fs-sm);
+}
+
+/* ───────────────────────────── 큰 숫자 ───────────────────────────── */
+
+.bp-live-bignums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bp-gap);
+  margin-block: 6px 12px;
+}
+
+.bp-live-bignum {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 10px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.bp-live-bignum__value {
+  font-family: var(--bp-font-numeric);
+  font-size: clamp(34px, 6vw, 72px);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--bp-text-strong);
+}
+
+.bp-live-bignum__label {
+  color: var(--bp-text-dim);
+  font-size: var(--bp-fs-sm);
+  text-align: center;
+}
+
+.bp-live-wait {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: var(--bp-fs-lg);
+  color: var(--bp-text);
+}
+
+/* ───────────────────────────── 명단 ───────────────────────────── */
+
+.bp-live-roster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px;
+}
+
+.bp-live-roster__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+/* 끊긴 사람은 흐리게 — 다만 글자("끊김")를 함께 붙인다. */
+.bp-live-roster__row.is-off {
+  opacity: 0.55;
+}
+
+.bp-live-roster__row.is-excluded {
+  border-style: dashed;
+}
+
+.bp-live-roster__label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.bp-live-roster__name {
+  font-weight: 600;
+  color: var(--bp-text-strong);
+  overflow-wrap: anywhere;
+}
+
+/* ───────────────────────────── 실시간 점수판 ───────────────────────────── */
+
+.bp-live-board {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.bp-live-board__row {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr) auto auto auto;
+  grid-template-areas:
+    'no name score lives state'
+    'no bar  bar   bar   bar';
+  gap: 4px 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--bp-line);
+  border-radius: var(--bp-radius);
+  background: var(--bp-panel);
+}
+
+.bp-live-board__row.is-off {
+  opacity: 0.55;
+}
+
+.bp-live-board__row.is-done {
+  border-color: color-mix(in srgb, var(--bp-ok) 60%, var(--bp-line));
+}
+
+.bp-live-board__no {
+  grid-area: no;
+  font-family: var(--bp-font-numeric);
+  font-size: var(--bp-fs-lg);
+  font-weight: 700;
+  color: var(--bp-text-dim);
+  text-align: right;
+}
+
+.bp-live-board__name {
+  grid-area: name;
+  font-weight: 700;
+  color: var(--bp-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.bp-live-board__score {
+  grid-area: score;
+  font-family: var(--bp-font-numeric);
+  font-size: var(--bp-fs-lg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bp-live-board__lives {
+  grid-area: lives;
+  color: var(--bp-text-dim);
+  font-size: var(--bp-fs-sm);
+  white-space: nowrap;
+}
+
+.bp-live-board__state {
+  grid-area: state;
+  font-size: var(--bp-fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bp-live-board__bar {
+  grid-area: bar;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bp-wall);
+  overflow: hidden;
+}
+
+.bp-live-board__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bp-accent);
+  transition: width 220ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-live-board__fill {
+    transition: none;
+  }
+}
+
+/* ───────────────────────────── 발표자 ───────────────────────────── */
+
+.bp-live-winner {
+  margin-block: 10px 16px;
+  padding: 20px 18px;
+  border: 1px solid var(--bp-accent);
+  border-radius: var(--bp-radius);
+  background: color-mix(in srgb, var(--bp-accent) 10%, var(--bp-panel));
+  text-align: center;
+}
+
+.bp-live-winner__tag {
+  margin: 0 0 8px;
+  color: var(--bp-text-dim);
+  font-size: var(--bp-fs-sm);
+  letter-spacing: 0.18em;
+}
+
+.bp-live-winner__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.bp-live-winner__item {
+  display: grid;
+  gap: 4px;
+}
+
+.bp-live-winner__name {
+  font-size: var(--bp-fs-hero);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--bp-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.bp-live-winner__facts {
+  color: var(--bp-text);
+  font-size: var(--bp-fs);
+}
+
+.bp-live-winner__reason {
+  color: var(--bp-text-dim);
+  font-size: var(--bp-fs-sm);
+}
+
+/* ───────────────────────────── 작은 조작부 ───────────────────────────── */
+
+.bp-live-toggle {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-block: 10px;
+}
+
+.bp-live-toggle__label {
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+  color: var(--bp-text);
+}
+
+/* ───────────────────────────── 좁은 화면 ───────────────────────────── */
+
+@media (max-width: 560px) {
+  .bp-live-board__row {
+    grid-template-columns: 2em minmax(0, 1fr) auto;
+    grid-template-areas:
+      'no name  score'
+      'no lives state'
+      'no bar   bar';
+  }
+
+  .bp-live-join {
+    flex-direction: column;
+  }
+}

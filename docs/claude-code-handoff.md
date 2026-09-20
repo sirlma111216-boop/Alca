@@ -7,7 +7,7 @@
 
 ## 0. 30초 요약
 
-브릭픽은 **정적 웹 앱**입니다. 서버·계정·데이터베이스가 없습니다.
+브릭픽은 **정적 웹 앱**입니다. 계정도 데이터베이스도 없습니다.
 참가자 목록을 주면 벽돌깨기 경기를 치르고 **발표자 ID 목록**을 돌려줍니다.
 
 ```js
@@ -34,6 +34,28 @@ createBrickPickHost({
 
 수업 앱이 해야 할 일은 **참가자 목록을 주고, 돌아온 ID 를 저장하는 것** 둘뿐입니다.
 게임은 로그인·수업 관리·참가자 관리·발표 이력 저장을 **하지 않습니다.**
+
+### 실시간 참여 모드는 이 연동과 별개입니다
+
+브릭픽에는 **학생이 각자 폰으로 들어오는 실시간 모드**가 따로 있습니다
+(수업 코드 6자리 + WebSocket + Cloudflare Durable Object).
+**수업 앱 연동과 섞이지 않습니다.**
+
+| | iframe / npm 연동 (이 문서) | 실시간 참여 |
+|---|---|---|
+| 참가자를 누가 아는가 | **수업 앱**이 안다. `id` 와 `nickname` 을 넘긴다 | 게임이 모른다. 학생이 그 자리에서 닉네임을 정한다 |
+| 결과 | `BrickPickResult` 가 **수업 앱의 ID 체계로** 돌아온다 | 교사 화면에만 남는다. 닉네임 기준 |
+| 서버 | 없음 | Worker + Durable Object |
+| 학생 기기 | 필요 없음 | 필요함 |
+
+> **수업 앱이 이미 학생 명단(uid, 이름)을 가지고 있다면 iframe 방식이 낫습니다.**
+> 학생이 닉네임을 다시 정할 필요가 없고, 발표자가 **수업 앱의 uid 그대로** 돌아와
+> 발표 이력에 바로 적을 수 있습니다. 실시간 모드의 결과는 닉네임뿐이라
+> 수업 앱의 사용자와 이어 붙이려면 사람이 눈으로 맞춰야 합니다.
+>
+> 실시간 모드는 **명단이 없을 때**(일회성 특강, 다른 학교 수업, 외부 워크숍)를 위한 것입니다.
+> 연동 작업에서는 이 문서의 1~9절만 보면 되고, 실시간 모드는
+> [live-mode.md](./live-mode.md) 와 [protocol.md](./protocol.md) 8절에 따로 있습니다.
 
 ---
 
@@ -63,14 +85,21 @@ brickpick/
 │  │     ├─ protocol.ts         ★ 메시지 타입·검증·origin 허용 목록 (양쪽이 공유)
 │  │     ├─ embed-host.ts       iframe 안쪽 (게임 쪽)
 │  │     └─ host-client.ts      ★ createBrickPickHost — 부모(수업 앱) 쪽
-│  ├─ standalone/               독립 실행 화면 (라이브러리에 들어가지 않는다)
+│  ├─ live/                     실시간 참여 — 브라우저 쪽 (연동에는 안 쓴다)
+│  │  ├─ client.ts              LiveClient — WebSocket 연결·재접속·기기 토큰·수업 코드 기억
+│  │  └─ types.ts               AppMode, LiveMatchSetup, LiveResult, readCodeFromUrl
+│  ├─ standalone/               독립 실행 화면 + 실시간 화면 (라이브러리에 들어가지 않는다)
 │  └─ embed/main.tsx            /embed/ 진입 스크립트
+├─ worker/                      실시간 참여 — 서버 쪽 (연동에는 안 쓴다)
+│  ├─ protocol.ts               메시지 봉투·수업 코드·닉네임 거르기·공유 타입
+│  ├─ room-do.ts                RoomSession — 수업 1개 = Durable Object 1개
+│  └─ index.ts                  진입점. /ws 와 /api/* 만 처리
 ├─ index.html                   독립 실행 진입점  → /
 ├─ embed/index.html             임베드 진입점      → /embed/
 ├─ public/_headers              ★ iframe 허용 목록 (frame-ancestors)
 ├─ public/404.html
-├─ wrangler.jsonc               ★ Cloudflare Workers Static Assets 배포 설정
-├─ netlify.toml                 대체 배포
+├─ wrangler.jsonc               ★ Cloudflare Workers 배포 설정 (정적 + 실시간 서버)
+├─ netlify.toml                 대체 배포 (정적만)
 ├─ examples/html-host/          ★ 순수 HTML + postMessage 직접 사용 예제
 ├─ examples/react-host/         ★ npm 패키지 설치 예제
 ├─ scripts/static-server.mjs    빌드 결과 확인용 정적 서버
@@ -84,8 +113,13 @@ brickpick/
 |---|---|---|
 | `npm run build:app` | `dist/` | 정적 사이트. `/` 와 `/embed/` |
 | `npm run build:lib` | `dist-lib/` | npm 패키지 (ESM + `.d.ts`) |
+| `npx wrangler deploy` | (없음) | `dist/` + `worker/` 를 Cloudflare 에 올린다 |
 
-**둘은 분리돼 있습니다.** 배포에는 `dist/` 만 올립니다.
+**셋은 분리돼 있습니다.** 정적 배포에는 `dist/` 만 올라가고,
+`worker/` 는 vite 를 거치지 않고 wrangler 가 직접 번들합니다.
+
+> **`src/live/` 와 `worker/` 는 npm 패키지에 들어가지 않습니다.**
+> 수업 앱이 `brickpick` 을 설치해도 WebSocket 코드는 딸려 오지 않습니다.
 
 ---
 
@@ -197,6 +231,8 @@ result.seed                          // 재현용
 | 하위 경로 배포 | 빌드 변수 `VITE_BASE` (예: `/brickpick/`) | 다시 빌드 |
 | 게임 수치 (난이도·아이템·점수) | `src/core/config.ts` | 다시 빌드 |
 | 배포 설정 | `wrangler.jsonc` (Workers), `netlify.toml` (Netlify) | — |
+| 실시간 서버가 도는 경로 | `wrangler.jsonc` 의 `assets.run_worker_first` | 다시 배포 |
+| 실시간 방 보관 기간 · 인원 · 묶음 간격 | `worker/room-do.ts`, `worker/protocol.ts` | 다시 배포 |
 | Node 버전 | `.nvmrc` (22) | — |
 
 > **허용 목록은 두 군데 다 고쳐야 합니다.**
@@ -296,9 +332,9 @@ onReady: (info) => {
 - **교사가 하는 일은 둘입니다: 다 모였는지 보고, 시작을 누른다.**
   방식·난이도·시간·선정 규칙은 수업 앱의 설정으로 고정해 넘기세요.
   임베드 모드에는 참가자 편집 UI 가 애초에 없습니다.
-- **학생은 아무것도 입력하지 않습니다.** 자동 경기는 관전만 하고,
+- **iframe/npm 연동에서 학생은 아무것도 입력하지 않습니다.** 자동 경기는 관전만 하고,
   직접 조작 모드는 교사 기기에서 한 명씩 돌아가며 합니다.
-  (여러 기기 동시 접속은 이번 범위가 아닙니다.)
+  학생 기기를 쓰고 싶다면 그것은 **실시간 모드**이고, 이 연동 경로와는 별개입니다(0절).
 - 결과 전까지 **몇 위가 발표하는지 감추고 싶다면**: `selectionRule` 을 학생 화면 쪽
   설정에 넣지 마세요. 임베드 화면은 규칙 요약을 보여 주므로, 감춰야 한다면
   교사 화면에서만 게임을 띄우세요.
@@ -311,9 +347,12 @@ onReady: (info) => {
 
 | 제한 | 내용 | 대응 |
 |---|---|---|
-| **온라인 멀티플레이 없음** | 여러 학생 기기에서 동시 접속 불가. 한 브라우저에서 완결 | 직접 조작은 교사 기기에서 순번제. 네트워크 어댑터 자리는 남겨 뒀다 |
-| **서버 검증 없음** | 점수는 학생/교사 브라우저에서 계산된다. 조작 가능 | 수업 중 발표자 선정에는 충분. 성적에 반영되는 용도로는 쓰지 말 것 |
-| **참가자 40명** | 기본 지원 범위 | 41명 이상은 거절. 나눠서 진행 |
+| **같은 경기장을 함께 하는 멀티플레이 없음** | 학생 기기 동시 접속은 **된다**(실시간 모드). 다만 각자 자기 경기장에서 **똑같은 판을 따로** 한다. 남의 공이 내 화면에 들어오지 않는다 | 공을 주고받는 대전이 필요하면 이 게임이 아니다 |
+| **실시간 모드는 연동과 별개** | 결과가 닉네임 기준이라 수업 앱의 uid 로 돌아오지 않는다 | 수업 앱에 명단이 있으면 **iframe 방식을 쓸 것** (0절) |
+| **실시간 모드는 Workers 배포에서만** | Pages·Netlify·GitHub Pages 에는 `/ws` 가 없다 | 참여 칸이 조용히 접힌다. 오류는 안 난다 |
+| **서버 검증 없음** | 점수는 학생/교사 브라우저에서 계산된다. 실시간 모드도 같다. 조작 가능 | 수업 중 발표자 선정에는 충분. 성적에 반영되는 용도로는 쓰지 말 것 |
+| **참가자 40명** | 기본 지원 범위. 실시간 모드도 한 방 40명 | 41명 이상은 거절. 나눠서 진행 |
+| **실시간 방은 8일** | Durable Object 의 TTL. 그 전에는 같은 코드로 이어진다 | 8일이 지나면 새 코드를 연다 |
 | **GitHub Pages 임베드 비권장** | 응답 헤더를 설정할 수 없어 `frame-ancestors` 를 못 준다 | Cloudflare Workers / Pages / Netlify 사용 |
 | **환경변수는 빌드 시점** | 허용 목록을 바꾸면 다시 빌드·배포해야 한다 | 배포 파이프라인에 반영 |
 | **결과 전달 실패 가능** | iframe 에서 `COMPLETE_ACK` 가 안 오면 제한적으로 재전송 후 포기 | 게임 화면에 실패를 표시하고 결과 JSON 내려받기를 제공한다. **성공처럼 보이지 않는다** |
@@ -337,6 +376,11 @@ onReady: (info) => {
 5. **취소 ≠ 완료** — 취소된 경기는 결과를 만들지 않는다.
 6. **두 가지 순위** — `rank` 와 `eligibleRank` 를 항상 함께 낸다. 선정은 `eligibleRank` 기준.
 7. **`core` 는 브라우저를 모른다** — DOM·React·오디오·배포 업체 API 금지.
+8. **`core` 는 네트워크도 모른다** — 실시간 기능이 생긴 뒤에도 마찬가지입니다.
+   `WebSocket`·`fetch`·수업 코드는 `src/live` 와 `worker/` 에만 있습니다.
+   순위 계산은 **서버가 아니라** 교사 화면이 `computeRanking`/`selectPresenters` 로 합니다.
+9. **실시간은 부가 기능이다** — 연결이 끊겨도 게임은 그대로 돌아가야 합니다.
+   점수 올리기 실패가 게임을 멈추게 만들면 안 됩니다.
 
 자세한 것은 브릭픽 저장소의 [`CLAUDE.md`](../CLAUDE.md) 에 있습니다.
 
@@ -367,15 +411,20 @@ HTML 예제는 `createBrickPickHost` 를 쓰지 않고 **postMessage 를 직접*
 
 ```bash
 npm install
-npm run dev               # 개발 서버 5173. / 와 /embed/
+npm run dev               # 개발 서버 5173. / 와 /embed/  (실시간은 안 뜬다)
 npm run verify            # 타입 검사 + 테스트 + 앱 빌드 + 라이브러리 빌드
+npm run typecheck         # 앱(tsconfig.json) + 실시간 서버(tsconfig.worker.json) 두 벌
 npm run build:app         # dist/
 npm run build:lib         # dist-lib/
-npm run serve:dist        # dist/ 를 4178 에서 서빙 (배포 결과 확인)
+npm run serve:dist        # dist/ 를 4178 에서 서빙 (배포 결과 확인. 실시간 없음)
+npx wrangler dev          # dist/ + 실시간 서버를 8787 에서 함께 (실시간 확인용)
 npm run test:integration  # 라이브러리를 예제 앱에 실제 설치해 빌드
-npm run deploy:workers    # Cloudflare Workers Static Assets
-npm run deploy:pages      # Cloudflare Pages
+npm run deploy:workers    # Cloudflare Workers — 정적 + 실시간 서버
+npm run deploy:pages      # Cloudflare Pages — 정적만
 ```
+
+연동 작업만 한다면 `npm run dev` 와 `npm run serve:dist` 로 충분합니다.
+`wrangler` 는 실시간 모드를 건드릴 때만 필요합니다.
 
 패키지를 다른 저장소에 설치하려면 (npm 공개 게시 없이):
 

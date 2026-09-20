@@ -13,14 +13,20 @@
 
 ```bash
 npm run dev            # 개발 서버 (5173). /  와 /embed/ 두 진입점
-npm run typecheck      # tsc --noEmit
+npm run typecheck      # 앱(tsconfig.json) + Worker(tsconfig.worker.json) 둘 다
 npm test               # vitest run
 npm run build:app      # 정적 사이트 → dist/
 npm run build:lib      # 라이브러리 → dist-lib/   (앱 빌드와 출력이 분리돼 있다)
 npm run verify         # typecheck + test + build
 npm run serve:dist     # dist/ 를 정적 서버로 (4178). 배포 결과 확인용
 npm run test:integration  # 라이브러리를 예제 앱에 실제로 설치해 빌드까지 확인
+
+# 실시간 참여(학생 폰)를 건드렸다면
+npm run build:app && npx wrangler dev   # dist/ + Worker + Durable Object (8787)
+npm run verify:live                     # 교사 1명 + 학생 3명으로 WebSocket 왕복 검증
 ```
+
+`npm run dev` 와 `serve:dist` 는 **정적 파일만** 내려준다 — 실시간 참여는 `wrangler dev` 에서만 뜬다.
 
 Node 22 (`.nvmrc`). 패키지 관리자는 **npm** 하나만 쓴다 (`package-lock.json`).
 
@@ -31,7 +37,9 @@ Node 22 (`.nvmrc`). 패키지 관리자는 **npm** 하나만 쓴다 (`package-lo
 | `src/core` | 게임 상태·물리·난수·점수·순위·선정 | **DOM·React·오디오·배포 업체 API 를 절대 쓰지 않는다.** Node 에서 그대로 돌아야 한다 |
 | `src/renderer` | Canvas·효과·입력·오디오 | 엔진 상태를 **바꾸지 않는다** (읽기만) |
 | `src/adapters` | React 컴포넌트, mount API, iframe 통신 | 게임 규칙을 새로 만들지 않는다 |
-| `src/standalone` | 참가자 입력·설정·결과 화면 | 라이브러리 빌드에 들어가지 않는다 |
+| `src/standalone` | 참가자 입력·설정·결과 화면, 실시간 교사·학생 화면 | 라이브러리 빌드에 들어가지 않는다 |
+| `src/live` | 실시간 참여의 **브라우저 쪽** (WebSocket·재접속·기기 토큰) | 게임 규칙을 만들지 않는다 |
+| `worker/` | 실시간 참여의 **서버 쪽** (Cloudflare Worker + Durable Object) | `src/` 를 import 하지 않는다. 점수·순위를 계산하지 않는다 |
 
 `src/adapters/index.ts` (기본 진입점) 는 **React 를 import 하지 않는다.**
 React 가 필요하면 `src/adapters/react.tsx` 에만 둔다.
@@ -73,8 +81,10 @@ React 가 필요하면 `src/adapters/react.tsx` 에만 둔다.
 
 ## 배포
 
-1순위 **Cloudflare Workers Static Assets** (`wrangler.jsonc`, Worker 스크립트 없음),
-2순위 Cloudflare Pages, 외부 대안 Netlify. 전부 같은 `dist/` 를 올린다.
+1순위 **Cloudflare Workers** (`wrangler.jsonc`) — 정적 파일 + 실시간 참여 서버를 한 번에 올린다.
+`run_worker_first` 는 `["/ws", "/api/*"]` 로 못 박아 둔다. `true` 로 바꾸면 **모든 요청**이
+Worker 를 거쳐 느려지고 요금이 는다.
+2순위 Cloudflare Pages, 외부 대안 Netlify — 둘 다 정적만이라 **실시간 참여가 안 된다.**
 자세한 절차는 [docs/deployment.md](docs/deployment.md).
 
 `public/_headers` 에 `X-Frame-Options` 를 **절대 넣지 마라** — 수업 앱이 iframe 으로 못 연다.

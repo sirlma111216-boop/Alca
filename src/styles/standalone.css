@@ -1742,3 +1742,28 @@ button.bp-stepper__button {
     max-width: 1360px;
   }
 }
+
+/* 진행 방식 고르기 — 첫 화면에서 "학생 폰으로 참여" 로 갈라지는 자리 */
+.bp-modepick {
+  margin: 0 0 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--bp-line, #1e2b52);
+  border-left: 4px solid var(--bp-accent, #22d3ee);
+  border-radius: 12px;
+  background: rgba(34, 211, 238, 0.06);
+}
+.bp-modepick__lead {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.bp-modepick__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.bp-modepick__note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--bp-text-dim, #8ea0c9);
+}

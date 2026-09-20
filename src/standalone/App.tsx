@@ -5,6 +5,7 @@
  * 참가자 입력 → 경기 방식·난이도 → 선정 규칙 → 규칙 요약 → 경기 → 결과 → 다시 하기.
  */
 
+import { useState } from 'react'
 import { LiveRegion } from './components/Callout'
 import { Stepper } from './components/Stepper'
 import { Toggle } from './components/Toggle'
@@ -14,11 +15,53 @@ import { ParticipantsScreen } from './screens/ParticipantsScreen'
 import { ResultScreen } from './screens/ResultScreen'
 import { SelectionScreen } from './screens/SelectionScreen'
 import { SummaryScreen } from './screens/SummaryScreen'
+import { HostLiveScreen } from './screens/HostLiveScreen'
+import { StudentJoinScreen } from './screens/StudentJoinScreen'
 import { clearAllStoredData, useStandaloneStore } from './state/store'
+import { readCodeFromUrl } from '../live/types'
+import type { AppMode } from '../live/types'
+
+/**
+ * 첫 진입 모드를 정한다.
+ * 주소에 ?code=ABC123 이 있으면 QR 로 들어온 학생이므로 곧장 참여 화면으로 보낸다.
+ */
+function initialAppMode(): AppMode {
+  if (typeof window === 'undefined') return 'solo'
+  return readCodeFromUrl(window.location.href) ? 'student' : 'solo'
+}
 
 export function App() {
   const { state, dispatch, names } = useStandaloneStore()
+  const [appMode, setAppMode] = useState<AppMode>(initialAppMode)
   const inMatch = state.screen === 'match'
+
+  /** 모드를 벗어날 때 주소의 ?code= 를 지운다 — 새로고침하면 또 학생 화면으로 가 버린다. */
+  const backToSolo = (): void => {
+    setAppMode('solo')
+    try {
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('code')) {
+        url.searchParams.delete('code')
+        window.history.replaceState(null, '', url.toString())
+      }
+    } catch {
+      /* 주소를 못 고쳐도 화면은 바뀐다 */
+    }
+  }
+
+  if (appMode === 'student') {
+    return <StudentJoinScreen initialCode={readCodeFromUrl(window.location.href)} onExit={backToSolo} />
+  }
+
+  if (appMode === 'host') {
+    return (
+      <HostLiveScreen
+        onExit={backToSolo}
+        reducedMotion={state.prefs.reducedMotion}
+        soundEnabled={state.prefs.soundEnabled}
+      />
+    )
+  }
 
   if (inMatch) {
     return (
@@ -65,6 +108,30 @@ export function App() {
         </div>
         <p className="bp-top__tagline">수업용 벽돌깨기 발표자 선정</p>
       </header>
+
+      {state.screen === 'participants' ? (
+        <section className="bp-modepick" aria-label="진행 방식 고르기">
+          <p className="bp-modepick__lead">
+            <strong>학생들이 자기 폰으로 참여</strong>하게 할 수도 있습니다.
+          </p>
+          <div className="bp-modepick__row">
+            <button type="button" className="bpx-btn" onClick={() => setAppMode('host')}>
+              학생 폰으로 참여 →
+            </button>
+            <button
+              type="button"
+              className="bpx-btn bpx-btn--ghost"
+              onClick={() => setAppMode('student')}
+            >
+              나는 학생입니다 (수업 코드 입력)
+            </button>
+          </div>
+          <p className="bp-modepick__note">
+            아래 방식은 <strong>교사 기기 한 대</strong>로 끝냅니다 — 닉네임을 직접 입력하고
+            자동 경기로 뽑거나, 한 명씩 차례로 플레이합니다. 인터넷 연결이 없어도 됩니다.
+          </p>
+        </section>
+      ) : null}
 
       <Stepper current={state.screen} onJump={(screen) => dispatch({ type: 'goto', screen })} />
 
@@ -144,9 +211,12 @@ export function App() {
           </div>
         </details>
         <p className="bp-bottom__note">
-          브릭픽은 어떤 정보도 외부 서버로 보내지 않습니다. 참가자 명단과 경기 결과는 기본적으로
-          저장하지 않으며, 화면을 새로 고치면 사라집니다. 이 기기에 남는 것은 위의 화면·소리
-          설정뿐입니다.
+          이 화면(교사 기기 한 대로 진행하는 방식)은 <strong>어떤 정보도 외부로 보내지 않습니다.</strong>{' '}
+          참가자 명단과 경기 결과는 기본적으로 저장하지 않으며, 화면을 새로 고치면 사라집니다. 이
+          기기에 남는 것은 위의 화면·소리 설정뿐입니다.
+          <br />
+          <strong>학생 폰으로 참여</strong>를 쓸 때만 서버에 연결합니다. 그때 올라가는 것은 학생이
+          정한 별명과 점수뿐이고(실명·학번은 올라가지 않습니다), 8일 뒤 자동으로 사라집니다.
         </p>
       </footer>
     </div>

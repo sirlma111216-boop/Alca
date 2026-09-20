@@ -1,15 +1,28 @@
 # 배포 — GitHub · Cloudflare · 도메인 연결
 
 브릭픽은 **정적 웹 앱**입니다. 브라우저가 물리 계산, 렌더링, 자동 경기, 아이템 처리를
-모두 수행합니다. 서버도, 데이터베이스도, 유료 API 도 필요 없습니다.
-아이템 기능 때문에 상시 서버를 추가하지 않았습니다.
+모두 수행합니다. 데이터베이스도, 유료 API 도, 로그인도 없습니다.
 
-| 순위 | 플랫폼 | 설정 파일 |
-|---:|---|---|
-| **1** | **Cloudflare Workers Static Assets** | `wrangler.jsonc` + `public/_headers` |
-| 2 | Cloudflare Pages | 같은 `dist/` + `public/_headers` |
-| 대안 | Netlify | `netlify.toml` |
-| 참고 | GitHub Pages | `VITE_BASE` 로 하위 경로 |
+여기에 **실시간 참여**(학생 폰 동시 접속)를 쓰려면 아주 작은 서버가 하나 필요합니다.
+`/ws` 와 `/api/*` 두 경로에서만 도는 Cloudflare Worker + Durable Object 입니다.
+**게임 화면은 여전히 Worker 를 거치지 않습니다.**
+
+| 무엇 | 서버가 필요한가 |
+|---|---|
+| 단독 실행 (교사가 닉네임 입력) | ❌ 정적 파일만 |
+| iframe 삽입 · npm 모듈 | ❌ 정적 파일만 |
+| **실시간 참여 (학생 폰)** | ✅ **Worker + Durable Object** |
+
+| 순위 | 플랫폼 | 설정 파일 | 실시간 참여 |
+|---:|---|---|---|
+| **1** | **Cloudflare Workers Static Assets** | `wrangler.jsonc` + `public/_headers` | ✅ 됨 |
+| 2 | Cloudflare Pages | 같은 `dist/` + `public/_headers` | ❌ 안 됨 (정적만) |
+| 대안 | Netlify | `netlify.toml` | ❌ 안 됨 |
+| 참고 | GitHub Pages | `VITE_BASE` 로 하위 경로 | ❌ 안 됨 |
+
+> 2~4순위에 올리면 **게임은 전부 돌아가되 실시간 참여 칸만 조용히 접힙니다.**
+> 실시간 서버가 없으면 앱이 그것을 알아차리고 참여 칸을 접습니다 — 오류 화면이 뜨지는 않습니다.
+> 실시간 참여를 쓰려면 1순위(Workers)로 배포하세요.
 
 ## 현재 상태 (2026-09-20)
 
@@ -17,6 +30,7 @@
 |---|---|
 | GitHub 저장소 | ✅ https://github.com/sirlma111216-boop/Alca (CI 통과) |
 | Cloudflare Workers Static Assets 배포 | ✅ **https://brickpick.sirlma.workers.dev** |
+| **실시간 참여 서버 (Worker + Durable Object)** | ✅ 같은 배포에 포함 — `/api/health` 가 `{"ok":true,"live":true}` |
 | 사용자 도메인 연결 | ⬜ 아직 — 도메인명이 정해지면 3절대로 진행 |
 | 수업 앱 iframe 허용 목록 | ⬜ 아직 — 수업 앱 주소가 정해지면 2-C 절대로 진행 |
 
@@ -51,6 +65,20 @@ dist/404.html            ← not_found_handling: "404-page" 가 쓰는 파일
 dist/assets/*            ← 해시가 붙은 JS·CSS
 ```
 
+### 실시간 참여까지 로컬에서 확인하려면
+
+`npm run dev` 와 `npm run serve:dist` 는 **정적 파일만** 내려줍니다 — `/ws` 와 `/api/*` 가
+없으므로 참여 칸이 접힌 상태로 보입니다. 실시간까지 보려면 Worker 를 함께 띄웁니다.
+
+```bash
+npm run build:app
+npx wrangler dev          # dist/ + Worker + Durable Object 를 같이 띄운다
+```
+
+주소가 `http://localhost:8787` 로 나옵니다. 거기서 `/api/health` 가
+`{"ok":true,"live":true, ...}` 를 주면 준비된 것입니다.
+브라우저 두 개(하나는 시크릿 창)로 같은 코드에 들어가 보세요.
+
 ---
 
 ## 1. GitHub 저장소
@@ -77,11 +105,12 @@ git push -u origin main
 
 ### 왜 이걸 먼저 쓰나
 
-- 정적 파일만 올립니다. **Worker 스크립트(`main`)를 두지 않습니다.**
-  요청마다 우리 코드가 도는 게 아니라 Cloudflare 가 파일을 바로 내려줍니다.
-- 그래서 느려질 일도, 요금이 늘어날 일도, 우리 코드의 버그가 낄 자리도 없습니다.
-- `wrangler.jsonc` 에 `run_worker_first` 같은 "자산 요청마다 Worker 실행" 설정을
-  **일부러 넣지 않았습니다.**
+- **정적 파일과 실시간 서버를 한 번에** 올릴 수 있는 유일한 선택지입니다.
+- 그러면서도 게임 화면은 **Worker 를 거치지 않습니다.** `run_worker_first` 를
+  `["/ws", "/api/*"]` 로 못 박아 두었기 때문입니다 (2-E 절).
+  그 두 경로 밖에서는 예전과 똑같이 Cloudflare 가 파일을 바로 내려줍니다.
+- 실시간 참여를 안 쓰더라도 손해가 없습니다. Worker 는 `/ws`·`/api/*` 로 요청이
+  올 때만 돕니다.
 
 ### 2-A. 명령줄로 배포 (가장 빠름)
 
@@ -183,6 +212,129 @@ curl -s https://brickpick.<계정>.workers.dev/embed/ \
 실제 수업 앱에서 iframe 을 열어 **전체 화면 버튼과 소리**까지 확인하세요
 (`examples/html-host/index.html` 로도 확인할 수 있습니다).
 
+**실시간 참여가 올라갔는지** 는 이것 하나로 확인합니다.
+
+```bash
+curl -s https://brickpick.<계정>.workers.dev/api/health
+```
+
+```json
+{"ok":true,"live":true,"protocolVersion":"1.0","runtime":"cloudflare-workers"}
+```
+
+| 결과 | 뜻 | 처방 |
+|---|---|---|
+| 위 JSON 이 나온다 | ✅ 실시간 참여가 동작한다 | — |
+| **HTML 이 나온다** (`<!doctype html>`) | Worker 가 그 경로를 안 잡고 있다 | `wrangler.jsonc` 의 `run_worker_first` 확인 후 다시 배포 |
+| 404 | `main` 이 없거나 배포가 옛날 것 | `npm run deploy:workers` 를 다시 |
+
+그 다음 실제로 한 번 돌려 보세요.
+
+```bash
+# 코드 발급이 되는지
+curl -s https://brickpick.<계정>.workers.dev/api/new-code
+# → {"code":"7K4M9P","protocolVersion":"1.0"}
+
+# 그 방의 상태 (아무도 없으면 members 가 빈 배열)
+curl -s https://brickpick.<계정>.workers.dev/api/room/7K4M9P
+```
+
+브라우저 두 개(하나는 교사, 하나는 시크릿 창에서 학생)로 같은 코드에 들어가
+명단이 올라가는지까지 보면 확실합니다. 혼자서 여러 명을 확인해야 하면
+교사 화면의 **[데모 학생 넣기]** 를 쓰고, 확인이 끝나면 **[데모 학생 빼기]** 로 지우세요.
+
+### 2-E. `wrangler.jsonc` 가 바뀐 것
+
+실시간 참여를 붙이면서 이 파일에 **다섯 가지**가 들어갔습니다.
+
+| 설정 | 값 | 왜 |
+|---|---|---|
+| `main` | `"worker/index.ts"` | Worker 진입점. 전에는 아예 없었다 |
+| `durable_objects.bindings` | `[{ name: "ROOM", class_name: "RoomSession" }]` | 수업 하나 = 객체 하나 |
+| `migrations` | `[{ tag: "v1", new_sqlite_classes: ["RoomSession"] }]` | **무료 요금제에서 쓰려면 이것이어야 한다** |
+| `assets.binding` | `"ASSETS"` | Worker 코드가 정적 파일을 꺼내 쓰기 위해 |
+| `assets.run_worker_first` | `["/ws", "/api/*"]` | **★ 아래 참고** |
+| `compatibility_flags` | `["nodejs_compat"]` | Durable Object + WebSocket hibernation |
+
+#### `run_worker_first` 를 `true` 로 두지 않은 이유
+
+이 설정은 **"어느 요청에서 Worker 가 먼저 도는가"** 를 정합니다.
+
+```jsonc
+"run_worker_first": true              // ✗ 모든 요청이 Worker 를 거친다
+"run_worker_first": ["/ws", "/api/*"] // ✓ 이 두 경로에서만
+```
+
+`true` 로 두면 **게임 HTML·JS·CSS·이미지까지 전부** 우리 Worker 코드를 한 번 거칩니다.
+
+- **느려집니다.** 정적 파일마다 JS 한 번이 더 도는 셈입니다.
+- **요금이 늡니다.** 정적 자산 요청은 원래 **과금 대상이 아닌데**, Worker 를 거치는
+  순간 **Worker 요청으로 세어집니다.** 게임 한 번 열면 자산 요청이 10~20건이므로
+  요청 수가 통째로 10~20배가 됩니다.
+- **버그가 낄 자리가 생깁니다.** 우리 코드가 잘못되면 게임 화면 자체가 안 뜹니다.
+  지금 구조에서는 Worker 가 죽어도 게임은 열리고 실시간 칸만 접힙니다.
+
+경로 목록으로 두면 이 셋이 전부 사라집니다. **목록을 `true` 로 바꾸지 마세요.**
+새 API 경로를 더할 때는 목록에 그 경로를 추가하세요.
+
+#### `new_sqlite_classes` 여야 하는 이유
+
+```jsonc
+"migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomSession"] }]
+```
+
+Durable Object 저장소에는 두 종류가 있습니다.
+
+| | 요금제 |
+|---|---|
+| `new_sqlite_classes` (SQLite 기반) | **무료 요금제에서 사용 가능** |
+| `new_classes` (기존 key-value 기반) | **유료(Workers Paid) 전용** |
+
+`new_classes` 로 적으면 무료 계정에서는 배포 자체가 거절됩니다.
+**이미 배포한 클래스의 종류는 나중에 바꿀 수 없습니다** — 새 클래스 이름으로 다시
+만들어야 하고, 그러면 그때까지의 방이 전부 사라집니다. 처음부터 맞춰 두세요.
+
+### 2-F. 요금 — 실시간 참여를 켜면 얼마가 드나
+
+**결론: 한 반 30명이 한 차시를 하는 정도는 무료 요금제 안에서 끝납니다.**
+
+| 무엇 | 과금 대상인가 | 이유 |
+|---|---|---|
+| 게임 화면·JS·CSS (정적 자산) | ❌ **아님** | Workers Static Assets 의 정적 요청은 무제한·무과금. `run_worker_first` 목록 밖이라 Worker 를 안 거친다 |
+| `/api/new-code`, `/api/health` | ✅ Worker 요청 | 수업당 한두 건 |
+| **WebSocket 연결** | ✅ **첫 연결만 요청 1건** | 연결한 뒤 주고받는 메시지는 요청으로 세지 않는다 |
+| Durable Object | ✅ 요청 + 실행 시간 | `new_sqlite_classes` 라 무료 요금제 포함 |
+| Durable Object 저장소 | ✅ 용량 | 방 하나가 몇 KB. 8일 뒤 자동으로 비워진다 |
+
+한 차시(30명 + 교사 1명) 어림:
+
+```
+WebSocket 연결      31건   (학생 30 + 교사 1. 중간에 끊겼다 붙으면 그만큼 추가)
+코드 발급·상태 확인   2건
+────────────────────────
+Worker 요청        약 33건
+```
+
+하루에 6차시를 매일 해도 요청 수는 하루 200건 남짓입니다.
+무료 요금제의 하루 한도(10만 건)에 한참 못 미칩니다.
+
+#### 무엇이 늘면 유료가 되는가
+
+무료 범위를 벗어나는 경우는 정해져 있습니다. **이 중 하나라도 하려면 요금을 먼저 계산하세요.**
+
+| 바뀌는 것 | 무엇이 는다 | 얼마나 위험한가 |
+|---|---|---|
+| **`run_worker_first: true` 로 바꾸기** | Worker 요청이 **10~20배** | ⚠️ 가장 위험. 절대 하지 마세요 |
+| **점수 보고 간격을 줄이기** (800ms → 100ms) | Durable Object 실행 시간·쓰기가 8배 | ⚠️ 위험. 화면은 더 나아지지 않습니다 |
+| **점수가 올라올 때마다 저장하기** | Durable Object 쓰기 횟수 | ⚠️ 묶어 보내기(250/700ms)를 없애면 그렇게 됩니다 |
+| 한 학교 전체가 동시에 쓰기 (수십 반) | 연결 수 · 동시 실행 | 여전히 무료 범위일 가능성이 높지만 확인 필요 |
+| **보관 기간(TTL)을 8일에서 늘리기** | 저장 용량 | 방이 안 지워지고 쌓입니다 |
+| **결과·통계를 서버에 영구 저장하기** | 저장 용량 + 읽기·쓰기 | 지금은 그런 기능이 없습니다 |
+| 리플레이 로그·이벤트를 서버로 올리기 | 메시지 크기 · 저장 용량 | 점수만 올리는 지금 구조를 깨는 변경입니다 |
+
+> **요금이 늘어나는 변경을 제안할 때는 "왜 필요한지"와 "요금이 얼마나 늘어나는지"를
+> 먼저 설명하고 결정하세요.** 지금 구조는 그 계산을 이미 한 번 한 결과입니다.
+
 ---
 
 ## 3. 보유 도메인 연결
@@ -252,19 +404,26 @@ curl -sv https://brickpick.example.com/ 2>&1 | grep -i "SSL certificate verify"
 | **도메인 구매·갱신** | `example.com` 소유권. 등록 기관(Cloudflare Registrar 등)에 내는 연회비 | 도메인마다 다름 (보통 연 1~2만원대) |
 | **호스팅 (Workers Static Assets)** | 게임 파일을 내려주는 것 | **정적 자산 요청은 무료 플랜에서 무제한·무과금** |
 | **Custom Domain 연결** | 서브도메인 붙이기, HTTPS 인증서 | **추가 요금 없음** |
+| **실시간 참여 (Worker + Durable Object)** | 수업 코드·명단·점수 모으기 | **한 반 30명 한 차시 기준 무료 범위** (2-F 절) |
 
-**이 둘은 별개의 요금입니다.** 도메인은 이미 사고 관리 중인 비용이고,
+**이것들은 별개의 요금입니다.** 도메인은 이미 사고 관리 중인 비용이고,
 브릭픽을 얹는다고 호스팅 요금이 새로 생기지 않습니다.
 
-> 나중에 서버 기능(상시 API, 데이터베이스, 결과 서버 저장 등)을 추가한다면
-> 그때는 Worker 요청 수와 저장소가 과금 대상이 됩니다. 지금 구조에는 그런 것이 없습니다.
-> 서버 기능을 넣자는 제안이 나오면 **왜 필요한지와 요금 영향을 먼저 설명**하고 결정하세요.
+> 실시간 참여는 서버를 쓰지만, **정적 자산은 여전히 Worker 를 거치지 않으므로**
+> 과금 대상이 아닙니다. 무엇이 늘면 유료가 되는지는 **2-F 절**에 표로 정리해 두었습니다.
+> 서버 쪽 기능(결과 영구 저장, 통계, 상시 API 등)을 넣자는 제안이 나오면
+> **왜 필요한지와 요금 영향을 먼저 설명**하고 결정하세요.
 
 ---
 
 ## 4. Cloudflare Pages (2순위)
 
 Workers 배포가 계정 권한 등으로 막힐 때 **같은 `dist/`** 를 Pages 에 올립니다.
+
+> **Pages 에는 실시간 참여가 올라가지 않습니다.** `wrangler pages deploy dist` 는
+> `dist/` 폴더만 올리고 `worker/` 와 Durable Object 설정은 보지 않습니다.
+> 게임은 전부 돌아가되 **참여 칸만 조용히 접힙니다** — `/ws` 와 `/api/*` 가 없기 때문입니다.
+> 학생 폰 참여가 필요하면 1순위(Workers)로 배포하세요.
 
 ### 명령줄
 
@@ -300,6 +459,9 @@ Pages 도 `dist/_headers` 를 읽으므로 iframe 허용 설정이 그대로 적
 
 Cloudflare 밖으로 옮겨야 할 분명한 사유가 있을 때를 위한 설정입니다.
 [`netlify.toml`](../netlify.toml) 이 준비돼 있습니다.
+
+> **Netlify 에도 실시간 참여는 올라가지 않습니다.** Durable Object 가 Cloudflare 전용이기
+> 때문입니다. 단독 실행·iframe·npm 모듈은 전부 그대로 됩니다.
 
 ```toml
 [build]
@@ -368,6 +530,7 @@ createBrickPickHost({
   (postMessage origin 검증은 그대로 동작하므로 데이터가 새지는 않습니다.)
 - `_headers` / `netlify.toml` 이 무시됩니다.
 - 404 페이지는 저장소 설정에 따릅니다.
+- **실시간 참여가 안 됩니다.** 정적 파일만 올라가므로 `/ws` 와 `/api/*` 가 없습니다.
 
 독립 실행만 쓸 때, 또는 시연용으로만 쓰세요.
 
@@ -398,14 +561,33 @@ createBrickPickHost({
 | 자산이 404 (하위 경로 배포) | `VITE_BASE` 를 안 줬다 | `VITE_BASE=/brickpick/` |
 | Pages 빌드가 라이브러리까지 돈다 | Framework preset 이 Vite 로 잡혀 `npm run build` 가 됐다 | preset 을 None, 명령을 `npm run build:app` 으로 |
 
+### 실시간 참여가 안 될 때
+
+| 증상 | 원인 | 처방 |
+|---|---|---|
+| 교사 화면에 참여 칸이 아예 없다 | `/api/health` 가 응답하지 않는다 | 2-D 절의 `curl` 로 확인. Pages/Netlify 배포면 원래 안 된다 |
+| `/api/health` 가 **HTML** 을 준다 | `run_worker_first` 목록에 `/api/*` 가 없다 | `wrangler.jsonc` 고치고 다시 배포 |
+| 배포가 `new_classes ... paid plan` 으로 거절 | `migrations` 가 `new_classes` 다 | `new_sqlite_classes` 로 (2-E 절) |
+| `Cannot find name 'DurableObject'` | Worker 타입 검사 설정 누락 | `npm run typecheck` 가 `tsconfig.worker.json` 도 돌리는지 확인 |
+| 학생만 못 들어온다 (교사는 됨) | 학교 망이 WebSocket 을 막는다 | 데이터로 바꿔 시험. [live-mode.md](./live-mode.md) 5절 |
+| 명단이 8일 뒤 비어 있다 | 방 보관 기간(TTL)이 지났다 | 정상 동작. 새 코드를 연다 |
+| 교사 권한을 못 잡는다 | 원래 교사 기기가 **아직 붙어 있다** | 그 기기를 닫거나, 끊길 때까지 기다린다 ([protocol.md](./protocol.md) 8-5) |
+
 ---
 
 ## 8. 배포에 넣지 않은 것
 
 - **호스팅 전용 API 를 `core` 에 넣지 않았습니다.** 엔진은 어느 플랫폼에 올리든 같습니다.
+  실시간 참여가 생긴 뒤에도 `core` 는 `WebSocket` 도 Cloudflare 도 모릅니다.
 - **비밀 키가 없습니다.** 클라이언트 빌드에도 저장소에도 들어가지 않습니다.
-  (`wrangler pages secret` 같은 것을 쓸 일이 없습니다.)
+  (`wrangler secret` 같은 것을 쓸 일이 없습니다. 실시간 참여에도 API 키가 없습니다 —
+  수업 코드 6자리가 전부입니다.)
 - **`dist-lib/` 는 배포하지 않습니다.** npm 패키지용이고, 앱 배포에는 `dist/` 만 올립니다.
-- **자산 요청마다 Worker 를 실행시키는 설정을 쓰지 않았습니다.**
+  `worker/` 도 npm 패키지에 들어가지 않습니다.
+- **자산 요청마다 Worker 를 실행시키지 않습니다.** `run_worker_first` 는 `true` 가 아니라
+  `["/ws", "/api/*"]` 목록입니다 (2-E 절).
+- **외부 데이터베이스를 쓰지 않습니다.** 방 상태는 Durable Object 안에만 있고 8일 뒤
+  자동으로 비워집니다. KV·D1·R2 를 붙이지 않았습니다.
+- **로그인·계정이 없습니다.** 실시간 참여에도 없습니다.
 - **SPA 리다이렉트를 넣지 않았습니다.** 멀티페이지 정적 사이트라 필요 없고,
   넣으면 오타 주소가 조용히 앱을 엽니다.
