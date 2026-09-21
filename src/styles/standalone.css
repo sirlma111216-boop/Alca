@@ -27,7 +27,7 @@
   --bp-wall-highlight: #313641;
   --bp-paddle: #bdbbff;
   --bp-text: #ffffff;
-  --bp-text-dim: rgba(255, 255, 255, 0.68);
+  --bp-text-dim: rgba(255, 255, 255, 0.72);
   --bp-text-strong: #ffffff;
   --bp-accent: #c8f6f9;
   --bp-accent-warm: #fc4c02;
@@ -48,7 +48,7 @@
 
   --bp-gap: var(--t-s-2xl);
   --bp-radius: var(--t-r-sm);
-  --bp-line: var(--t-hairline);
+  --bp-line: var(--t-border);
 
   color-scheme: light;
 }
@@ -226,7 +226,7 @@ body[data-reduced-motion='true'] *::after {
   gap: var(--t-s-sm) var(--t-s-2xl);
   justify-content: space-between;
   padding-bottom: var(--t-s-lg);
-  border-bottom: 1px solid var(--t-hairline-dark);
+  border-bottom: 1px solid var(--t-line-dark);
 }
 
 .bp-top__brand {
@@ -410,7 +410,7 @@ button.bp-stepper__button {
   gap: var(--t-s-md);
   align-items: flex-start;
   padding: var(--t-s-md) var(--t-s-lg);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-left: 4px solid var(--t-ink);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);
@@ -531,7 +531,7 @@ button.bp-stepper__button {
    밝은 면의 카드는 1px 선으로만 떠 있다. 그림자를 깔지 않는다. */
 
 .bp-card {
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);
   padding: var(--t-s-2xl);
@@ -618,7 +618,7 @@ button.bp-stepper__button {
   padding: var(--t-s-md) var(--t-s-2xl);
   min-height: 44px;
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-canvas);
   color: var(--t-ink);
   cursor: pointer;
@@ -629,8 +629,17 @@ button.bp-stepper__button {
   border-color: var(--t-ink);
 }
 
+/*
+ * 누를 수 없는 버튼.
+ * 예전에는 opacity 0.4 였는데, 그러면 검정 버튼이 #999 면에 흰 글자가 되어
+ * 대비가 **2.85:1** 로 떨어진다 — 무슨 버튼인지 읽을 수 없다.
+ * (WCAG 는 사용 불가 상태를 면제하지만, 읽히지도 않으면 안내가 안 된다.)
+ * 그래서 흐리게 만드는 대신 "꺼진 면" 을 따로 칠한다.
+ */
 .bpx-btn:disabled {
-  opacity: 0.4;
+  background: var(--t-hairline);
+  border-color: var(--t-line);
+  color: var(--t-body);
   cursor: not-allowed;
 }
 
@@ -647,7 +656,7 @@ button.bp-stepper__button {
 
 .bpx-btn--ghost {
   background: transparent;
-  border-color: var(--t-hairline);
+  border-color: var(--t-border);
 }
 
 /*
@@ -690,7 +699,7 @@ button.bp-stepper__button {
 .bp-match .bpx-btn,
 .bp-prac-top .bpx-btn {
   background: var(--t-surface-dark-soft);
-  border-color: var(--t-surface-dark-soft);
+  border-color: var(--t-border-dark);
   color: var(--t-on-dark);
 }
 
@@ -721,6 +730,15 @@ button.bp-stepper__button {
   background: transparent;
   border-color: var(--t-orange);
   color: var(--t-orange);
+}
+
+/* 짙은 면 위에서 누를 수 없는 버튼. */
+.bp-band--dark .bpx-btn:disabled,
+.bp-match .bpx-btn:disabled,
+.bp-prac-top .bpx-btn:disabled {
+  background: transparent;
+  border-color: var(--t-border-dark);
+  color: var(--t-body-dark);
 }
 
 /* 큰 머리말의 보조 버튼 — 민트 버튼은 이 자리에서만 쓴다. */
@@ -765,7 +783,7 @@ button.bp-stepper__button {
   gap: var(--t-s-md);
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--t-hairline);
+  border-top: 1px solid var(--t-line);
   padding-top: var(--t-s-lg);
 }
 
@@ -796,8 +814,19 @@ button.bp-stepper__button {
   gap: var(--t-s-sm);
 }
 
+/*
+ * 「꺼짐」·「사용 불가」를 흐림(opacity)으로 표시하지 않는다.
+ * 흐림은 면과 글자를 함께 지워서, 남은 글자가 2.0~2.5:1 로 읽히지 않게 된다.
+ * 대신 면을 칠하거나 막대를 세우고, 글자는 읽히는 색 그대로 둔다 —
+ * 어차피 옆의 「꺼짐」·「끊김」 글자가 뜻을 나른다.
+ */
 .bp-field.is-disabled {
-  opacity: 0.45;
+  opacity: 1;
+}
+
+/* 값 자체는 흐려도 되지만 이름표는 읽혀야 한다. */
+.bp-field.is-disabled .bp-field__value {
+  color: var(--t-body);
 }
 
 .bp-field__top {
@@ -859,7 +888,7 @@ button.bp-stepper__button {
   min-height: 44px;
   padding: var(--t-s-md) var(--t-s-md);
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-canvas);
   color: var(--t-ink);
 }
@@ -919,7 +948,17 @@ button.bp-stepper__button {
 }
 
 .bp-toggle.is-disabled {
-  opacity: 0.45;
+  opacity: 1;
+}
+
+/* 잠긴 스위치 — 레일을 연한 면으로 눕히고 손잡이를 회색으로. */
+.bp-toggle.is-disabled .bp-toggle__track {
+  background: var(--t-hairline);
+  border-color: var(--t-line);
+}
+
+.bp-toggle.is-disabled .bp-toggle__knob {
+  background: var(--t-line);
 }
 
 .bp-toggle__input {
@@ -942,7 +981,7 @@ button.bp-stepper__button {
   width: 44px;
   height: 24px;
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-hairline);
   position: relative;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -955,7 +994,8 @@ button.bp-stepper__button {
   width: 16px;
   height: 16px;
   border-radius: 2px;
-  background: var(--t-canvas);
+  /* 꺼짐: 연한 레일(#ebebeb) 위의 흰 손잡이는 1.19:1 이라 안 보였다. */
+  background: var(--t-body);
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
@@ -1043,7 +1083,7 @@ button.bp-stepper__button {
   height: 100%;
   padding: var(--t-s-lg);
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-canvas);
   cursor: pointer;
   transition: border-color 0.15s ease;
@@ -1087,7 +1127,7 @@ button.bp-stepper__button {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1177,7 +1217,7 @@ button.bp-stepper__button {
   margin: 0;
   padding: var(--t-s-5xl);
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-canvas);
   color: var(--t-body);
   text-align: center;
@@ -1199,12 +1239,17 @@ button.bp-stepper__button {
   align-items: center;
   gap: var(--t-s-md);
   padding: var(--t-s-md) var(--t-s-sm);
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
 }
 
 /* 제외된 사람은 색이 아니라 "제외" 라는 라벨로 표시된다. 면은 거들기만 한다. */
+/*
+ * 제외한 줄. 연한 면만으로는 1.19:1 이라 체크한 줄과 안 한 줄이 같아 보인다.
+ * 왼쪽 막대를 함께 세운다 — 체크상자·「이번 선정 제외」 글자와 같은 뜻을 세 번째로 말한다.
+ */
 .bp-exclude__row.is-on {
   background: var(--t-hairline);
+  box-shadow: inset 3px 0 0 var(--t-ink);
 }
 
 .bp-exclude__label {
@@ -1242,7 +1287,7 @@ button.bp-stepper__button {
   text-transform: uppercase;
   padding: var(--t-s-xxs) var(--t-s-sm);
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-hairline);
   color: var(--t-ink);
   white-space: nowrap;
@@ -1262,7 +1307,7 @@ button.bp-stepper__button {
 
 .bp-band--dark .bp-tag {
   background: var(--t-surface-dark-soft);
-  border-color: var(--t-surface-dark-soft);
+  border-color: var(--t-border-dark);
   color: var(--t-on-dark);
 }
 
@@ -1290,7 +1335,7 @@ button.bp-stepper__button {
   min-width: 52px;
   padding: var(--t-s-sm) var(--t-s-md);
   border-radius: var(--t-r-sm);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   background: var(--t-canvas);
   color: var(--t-body);
   cursor: pointer;
@@ -1423,7 +1468,7 @@ button.bp-stepper__button {
   gap: var(--t-s-xs) var(--t-s-md);
   justify-content: space-between;
   padding: var(--t-s-md) 0;
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
   font-size: var(--t-fs-body);
 }
 
@@ -1459,7 +1504,7 @@ button.bp-stepper__button {
 .bp-table td {
   text-align: left;
   padding: var(--t-s-md) var(--t-s-lg);
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
   vertical-align: top;
 }
 
@@ -1489,8 +1534,17 @@ button.bp-stepper__button {
   padding: var(--t-s-sm) var(--t-s-md);
 }
 
+/*
+ * 뽑힌 줄. 민트 면만으로는 흰 면 대비 1.17:1 이라 긴 표에서 그 줄을 찾을 수 없다.
+ * 왼쪽에 검정 막대를 세워 훑어도 보이게 한다 (면이 아니라 명암으로).
+ */
 .bp-table tbody tr.is-selected {
   background: var(--t-mint);
+}
+
+.bp-table tbody tr.is-selected th:first-child,
+.bp-table tbody tr.is-selected td:first-child {
+  box-shadow: inset 4px 0 0 var(--t-ink);
 }
 
 .bp-num {
@@ -1519,6 +1573,8 @@ button.bp-stepper__button {
   width: 16px;
   height: 11px;
   border-radius: 2px;
+  /* 민트·은백 같은 밝은 벽돌색은 흰 표 위에서 1.2:1 이라 테두리 없이는 사라진다. */
+  border: 1px solid var(--t-line);
   margin-right: var(--t-s-sm);
   vertical-align: baseline;
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(1, 1, 32, 0.3);
@@ -1543,15 +1599,17 @@ button.bp-stepper__button {
 
 .bp-item {
   padding: var(--t-s-lg) 0;
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
 }
 
 .bp-item:last-child {
   border-bottom: 0;
 }
 
+/* 꺼 둔 아이템 줄 — 흐리게 하지 않고 연한 면으로 눕힌다. 스위치가 「꺼짐」을 말한다. */
 .bp-item.is-off {
-  opacity: 0.5;
+  opacity: 1;
+  background: var(--t-hairline);
 }
 
 .bp-item__head {
@@ -1622,7 +1680,7 @@ button.bp-stepper__button {
   gap: var(--t-s-md);
   flex-wrap: wrap;
   padding: var(--t-s-md) 0;
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
   font-size: var(--t-fs-body);
 }
 
@@ -1661,7 +1719,24 @@ button.bp-stepper__button {
   font-size: var(--t-fs-caption);
 }
 
+/*
+ * 아이템 캡슐 글자 (E·C·M·S·L·B·+).
+ * 색을 ITEM_DEFS 에서 인라인으로 받는데, 그 색들은 **짙은 게임판용**이라
+ * 흰 표 위에서는 1.17~3.68:1 로 전부 읽히지 않는다.
+ * 특히 발표자로 뽑힌 줄은 면이 민트라, 민트색인 「패들 확장 E」가 **1.00:1** 이 되어
+ * 글자가 아예 사라진다.
+ * 그래서 설정 화면의 .bp-item__glyph 와 똑같이 짙은 면을 깔고 테두리를 두른다 —
+ * 짙은 면 위에서는 7색 모두 5.5:1 을 넘고, 게임판의 캡슐과도 같은 모양이 된다.
+ */
 .bp-item-chip__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 1px 5px;
+  border-radius: var(--t-r-sm);
+  border: 1px solid currentColor;
+  background: var(--t-canvas-dark);
   font-family: var(--t-font-mono);
   font-weight: 500;
 }
@@ -1732,7 +1807,7 @@ button.bp-stepper__button {
   align-items: center;
   justify-content: space-between;
   padding: var(--t-s-md) var(--t-gutter);
-  border-bottom: 1px solid var(--t-hairline-dark);
+  border-bottom: 1px solid var(--t-line-dark);
 }
 
 .bp-match__title {
@@ -1925,7 +2000,7 @@ button.bp-stepper__button {
   gap: var(--t-s-md);
   flex-wrap: wrap;
   padding: var(--t-s-md);
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
   font-size: var(--t-fs-body);
 }
 
@@ -1977,14 +2052,14 @@ button.bp-stepper__button {
 /* ───────────────────────────── 꼬리말 ───────────────────────────── */
 
 .bp-bottom {
-  border-top: 1px solid var(--t-hairline);
+  border-top: 1px solid var(--t-line);
   padding-block: var(--t-s-5xl) 0;
   row-gap: var(--t-s-2xl);
   align-content: start;
 }
 
 .bp-prefs {
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);
 }
@@ -2080,7 +2155,7 @@ button.bp-stepper__button {
 .bp-clearmode {
   margin: var(--t-s-lg) 0 0;
   padding: var(--t-s-2xl);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-left: 4px solid var(--t-orange);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);

@@ -440,7 +440,8 @@ export function createMatchRenderer(options: RendererOptions): MatchRenderer {
     tc.fillRect(t - edge, t - edge, aw - t * 2 + edge * 2, edge)
 
     // 바닥 경계 — 여기 아래로 떨어지면 목숨이 준다는 것을 보이게.
-    tc.fillStyle = withAlpha(PALETTE.danger, 0.22)
+    // 0.22 로는 짙은 바닥에 묻혀 안 보였다. 기능적인 선이므로 확실히 보이게 한다.
+    tc.fillStyle = withAlpha(PALETTE.danger, 0.55)
     tc.fillRect(t, ah - Math.max(1, s * 1.5), aw - t * 2, Math.max(1, s * 1.5))
 
     if (detail === 'full') {

@@ -20,9 +20,13 @@ export const PALETTE = {
   arenaBackground: '#010120',
   /** 경기장 안쪽 미세 격자. */
   arenaGrid: '#12122f',
-  /** 금속 벽 — 짙은 면 위의 1px 선 색과 그보다 한 단계 밝은 면. */
-  wall: '#26263a',
-  wallHighlight: '#313641',
+  /**
+   * 금속 벽 — 경기장의 경계다.
+   * 예전 값(#26263a / #313641)은 경기장 바닥(#010120) 위에서 1.4:1 / 1.7:1 이라
+   * 벽이 어디인지 보이지 않았다. tokens.css 의 짙은 면 선 값과 같게 맞췄다.
+   */
+  wall: '#454563',
+  wallHighlight: '#5e5e80',
   /** 패들 — 연보라 금속. */
   paddle: '#bdbbff',
   paddleEdge: '#6f6dc7',
@@ -40,7 +44,7 @@ export const PALETTE = {
   bullet: '#fc4c02',
   /** 글자. */
   text: '#ffffff',
-  textDim: 'rgba(255, 255, 255, 0.68)',
+  textDim: 'rgba(255, 255, 255, 0.72)',
   textStrong: '#ffffff',
   /**
    * 강조 — 발표자, 현재 순위 등.

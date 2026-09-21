@@ -18,7 +18,7 @@
   align-items: flex-start;
   margin-block: var(--t-s-md);
   padding: var(--t-s-lg);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-left: 4px solid var(--t-orange);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);
@@ -69,7 +69,7 @@
 .bp-live-qr {
   flex: 0 0 auto;
   padding: var(--t-s-md);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-radius: var(--t-r-sm);
   background: #ffffff;
   line-height: 0;
@@ -139,7 +139,7 @@
   gap: var(--t-s-xs) var(--t-s-md);
   align-items: baseline;
   padding: var(--t-s-md) var(--t-s-lg);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);
   color: var(--t-ink);
@@ -228,12 +228,17 @@
   gap: var(--t-s-sm);
   align-items: center;
   padding: var(--t-s-md) var(--t-s-sm);
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
 }
 
-/* 끊긴 사람은 흐리게 — 다만 글자("끊김")를 함께 붙인다. */
+/*
+ * 「꺼짐」·「사용 불가」를 흐림(opacity)으로 표시하지 않는다.
+ * 흐림은 면과 글자를 함께 지워서, 남은 글자가 2.0~2.5:1 로 읽히지 않게 된다.
+ * 대신 면을 칠하거나 막대를 세우고, 글자는 읽히는 색 그대로 둔다 —
+ * 어차피 옆의 「꺼짐」·「끊김」 글자가 뜻을 나른다.
+ */
 .bp-live-roster__row.is-off {
-  opacity: 0.55;
+  box-shadow: inset 3px 0 0 var(--t-line);
 }
 
 /* 제외된 사람은 연한 면으로. 옆의 "제외" 라벨이 뜻을 말한다. */
@@ -277,11 +282,11 @@
   gap: var(--t-s-sm) var(--t-s-lg);
   align-items: center;
   padding: var(--t-s-md) var(--t-s-sm);
-  border-bottom: 1px solid var(--t-hairline);
+  border-bottom: 1px solid var(--t-line);
 }
 
 .bp-live-board__row.is-off {
-  opacity: 0.55;
+  box-shadow: inset 3px 0 0 var(--t-line);
 }
 
 /*
@@ -438,7 +443,7 @@
 .bp-live-clearnote {
   margin: var(--t-s-lg) 0 0;
   padding: var(--t-s-2xl);
-  border: 1px solid var(--t-hairline);
+  border: 1px solid var(--t-border);
   border-left: 4px solid var(--t-orange);
   border-radius: var(--t-r-sm);
   background: var(--t-canvas);

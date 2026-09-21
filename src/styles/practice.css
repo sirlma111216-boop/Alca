@@ -11,7 +11,7 @@
   align-items: center;
   gap: var(--t-s-lg);
   padding: var(--t-s-md) var(--t-gutter);
-  border-bottom: 1px solid var(--t-hairline-dark);
+  border-bottom: 1px solid var(--t-line-dark);
   background: var(--t-canvas-dark);
   color: var(--t-on-dark);
 }
@@ -96,12 +96,12 @@
   gap: 0;
   margin: var(--t-s-3xl) 0 0;
   padding: var(--t-s-lg) 0 0;
-  border-top: 1px solid var(--t-hairline-dark);
+  border-top: 1px solid var(--t-line-dark);
   list-style: none;
 }
 
 .bp-prac-result.is-best .bp-prac-facts {
-  border-top-color: rgba(1, 1, 32, 0.15);
+  border-top-color: rgba(1, 1, 32, 0.45);
 }
 
 .bp-prac-facts li {

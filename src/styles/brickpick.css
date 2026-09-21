@@ -29,7 +29,7 @@
   --bp-paddle: #bdbbff;
   --bp-ball: #ffffff;
   --bp-text: #ffffff;
-  --bp-text-dim: rgba(255, 255, 255, 0.68);
+  --bp-text-dim: rgba(255, 255, 255, 0.72);
   --bp-text-strong: #ffffff;
   --bp-accent: #c8f6f9;
   --bp-accent-warm: #fc4c02;
@@ -37,11 +37,18 @@
   --bp-danger: #fc4c02;
   --bp-ok: #c8f6f9;
 
-  /* 짙은 면 위의 면과 선 */
+  /*
+   * 짙은 면 위의 면과 선.
+   * 선은 역할별로 둘이다 — 부품 **안쪽**을 가르는 구분선(2.2:1)과
+   * 부품의 **경계**를 긋는 윤곽(3.3:1). 예전에는 둘 다 #26263a(1.4:1) 라서
+   * 경기장 테두리도 버튼 테두리도 사실상 안 보였다.
+   * (tokens.css 의 --t-line-dark / --t-border-dark 와 같은 값이다.)
+   */
   --bp-surface: #12122a;
   --bp-surface-solid: #0a0a22;
   --bp-surface-soft: #313641;
-  --bp-line: #26263a;
+  --bp-line: #454563;
+  --bp-border: #5e5e80;
 
   --bp-radius: 4px;
   --bp-gap: 12px;
@@ -104,7 +111,7 @@
   position: relative;
   min-height: 240px;
   min-width: 0;
-  border: 1px solid var(--bp-line);
+  border: 1px solid var(--bp-border);
   border-radius: var(--bp-radius);
   background: var(--bp-arena);
   overflow: hidden;
@@ -152,14 +159,14 @@
   background: var(--bp-surface-soft);
   color: var(--bp-text);
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .bp-mode__glyph {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--bp-accent);
 }
 
@@ -172,7 +179,7 @@
 
 .bp-timer__label {
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -219,7 +226,7 @@
   align-items: baseline;
   gap: 4px 12px;
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -269,13 +276,13 @@
 .bp-board__head .bp-btn {
   min-height: 34px;
   padding: 0 12px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .bp-board__title {
   margin: 0;
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -341,7 +348,7 @@
 
 .bp-row__lives {
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.04em;
   color: var(--bp-text-dim);
   white-space: nowrap;
@@ -371,7 +378,7 @@
   gap: 6px;
   min-height: 44px;
   padding: 0 24px;
-  border: 1px solid var(--bp-surface-soft);
+  border: 1px solid var(--bp-border);
   border-radius: var(--bp-radius);
   background: var(--bp-surface-soft);
   color: var(--bp-text);
@@ -394,8 +401,17 @@
   outline-offset: 2px;
 }
 
+/*
+ * 누를 수 없는 버튼.
+ * 예전에는 opacity 0.4 였는데, 그러면 검정 버튼이 #999 면에 흰 글자가 되어
+ * 대비가 **2.85:1** 로 떨어진다 — 무슨 버튼인지 읽을 수 없다.
+ * (WCAG 는 사용 불가 상태를 면제하지만, 읽히지도 않으면 안내가 안 된다.)
+ * 그래서 흐리게 만드는 대신 "꺼진 면" 을 따로 칠한다.
+ */
 .bp-btn:disabled {
-  opacity: 0.4;
+  background: transparent;
+  border-color: var(--bp-border);
+  color: var(--bp-text-dim);
   cursor: not-allowed;
 }
 
@@ -416,9 +432,10 @@
   color: var(--bp-danger);
 }
 
+/* 주황 면 위의 흰 글자는 3.4:1 이라 못 읽는다. 검정이면 6.2:1 이다. */
 .bp-btn--danger:hover:not(:disabled) {
   background: var(--bp-danger);
-  color: #ffffff;
+  color: #010120;
 }
 
 .bp-btn--big {
@@ -493,7 +510,7 @@
   max-height: 100%;
   overflow-y: auto;
   padding: 32px;
-  border: 1px solid var(--bp-surface-soft);
+  border: 1px solid var(--bp-border);
   border-radius: var(--bp-radius);
   background: var(--bp-surface-solid);
   text-align: left;
@@ -502,7 +519,7 @@
 .bp-panel__kicker {
   margin: 0 0 12px;
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -537,7 +554,7 @@
 .bp-panel__warning {
   margin: 16px 0 0;
   padding: 12px 16px;
-  border: 1px solid var(--bp-surface-soft);
+  border: 1px solid var(--bp-border);
   border-left: 4px solid var(--bp-accent-warm);
   border-radius: var(--bp-radius);
   background: var(--bp-surface-soft);
@@ -611,7 +628,7 @@
 
 .bp-list__meta {
   font-family: var(--bp-font-num);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.04em;
   color: var(--bp-text-dim);
   white-space: nowrap;
@@ -640,7 +657,7 @@
   display: block;
   margin-top: 8px;
   font-family: var(--bp-font-num);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -658,7 +675,7 @@
 .bp-error {
   width: min(560px, 100%);
   padding: 32px;
-  border: 1px solid var(--bp-surface-soft);
+  border: 1px solid var(--bp-border);
   border-left: 4px solid var(--bp-danger);
   border-radius: var(--bp-radius);
   background: var(--bp-surface-solid);
@@ -724,7 +741,7 @@
 .bp-embed__box {
   width: min(520px, 100%);
   padding: 32px;
-  border: 1px solid #313641;
+  border: 1px solid #5e5e80;
   border-radius: 4px;
   background: #0a0a22;
   text-align: left;
@@ -747,7 +764,7 @@
 .bp-embed__text {
   margin: 0 0 8px;
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.72);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
@@ -770,7 +787,7 @@
   justify-content: center;
   min-height: 44px;
   padding: 0 24px;
-  border: 1px solid #313641;
+  border: 1px solid #5e5e80;
   border-radius: 4px;
   background: #313641;
   color: #ffffff;
