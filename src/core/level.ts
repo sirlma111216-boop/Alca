@@ -7,7 +7,14 @@
  * 같은 벽돌에서는 항상 같은 아이템이 나온다.
  */
 
-import { ARENA, BRICK_TYPES, BRICK_TYPE_ORDER, PLAY_LEFT, PLAY_WIDTH } from './config'
+import {
+  ARENA,
+  BRICK_TYPES,
+  BRICK_TYPE_ORDER,
+  PLAY_LEFT,
+  PLAY_WIDTH,
+  TOUGH_BAND_RATIO,
+} from './config'
 import type { BrickTypeId } from './config'
 import type { DifficultySettings, ItemKind } from './contract'
 import { ITEM_KINDS } from './contract'
@@ -44,10 +51,65 @@ export interface Level {
   brickH: number
 }
 
-/** 난이도에 따라 실제로 쓸 벽돌 종류를 고른다. 위 행일수록 단단하다. */
-export function brickTypesFor(maxDurability: number): BrickTypeId[] {
-  const usable = BRICK_TYPE_ORDER.filter((id) => BRICK_TYPES[id].durability <= maxDurability)
-  return usable.length > 0 ? [...usable] : ['mint']
+/**
+ * 행마다 어떤 벽돌을 놓을지 정한다 — 맨 위 행부터 차례로.
+ *
+ * **단단한 벽돌은 가운데 띠에만 둔다.** 위아래 행은 전부 한 번에 깨진다.
+ * 위를 무르게 두는 것이 핵심이다 — 공이 벽을 뚫고 위 빈 공간(hudBottom~brickTop)으로
+ * 올라가면 천장과 벽돌 윗면 사이를 튀어 다니며 여러 줄을 한꺼번에 걷어낸다.
+ *
+ * 띠 안에서는 **가운데가 가장 단단**하고, 바깥으로 갈수록 무르다.
+ * 띠 밖에서도 가운데에 가까운 행이 더 값지다 — 닿기 어려운 자리가 더 값진 게 자연스럽다.
+ *
+ * 예) 보통(7행, 최대 내구도 3)
+ *     민트 · 연보라 · 주황 · 은백 · 자홍 · 연보라 · 민트
+ *     → 두 번 이상 맞아야 하는 행은 7줄 중 3줄뿐이고, 맨 위 두 줄은 한 번에 깨진다.
+ */
+export function rowTypesFor(rows: number, maxDurability: number): BrickTypeId[] {
+  const durability = (id: BrickTypeId): number => BRICK_TYPES[id].durability
+  // BRICK_TYPE_ORDER 는 단단한 것부터다.
+  const tough = BRICK_TYPE_ORDER.filter(
+    (id) => durability(id) >= 2 && durability(id) <= maxDurability,
+  )
+  const soft = BRICK_TYPE_ORDER.filter((id) => durability(id) === 1)
+
+  // 위아래로 무른 행을 최소 한 줄씩 남긴다. 행이 둘 이하면 띠를 만들지 않는다.
+  const bandSize =
+    tough.length === 0 || rows <= 2
+      ? 0
+      : Math.max(1, Math.min(rows - 2, Math.round(rows * TOUGH_BAND_RATIO)))
+  const bandStart = Math.round((rows - bandSize) / 2)
+  const bandEnd = bandStart + bandSize - 1
+
+  // 띠 안: 가운데 행부터 바깥으로 번갈아 가며 단단한 순서대로 채운다.
+  const bandType = new Map<number, BrickTypeId>()
+  if (bandSize > 0) {
+    const center = bandStart + Math.floor((bandSize - 1) / 2)
+    const visiting: number[] = [center]
+    for (let step = 1; visiting.length < bandSize; step += 1) {
+      if (center - step >= bandStart) visiting.push(center - step)
+      if (visiting.length < bandSize && center + step <= bandEnd) visiting.push(center + step)
+    }
+    visiting.forEach((row, i) => bandType.set(row, tough[Math.min(tough.length - 1, i)]))
+  }
+
+  const out: BrickTypeId[] = []
+  for (let row = 0; row < rows; row += 1) {
+    const inBand = bandType.get(row)
+    if (inBand) {
+      out.push(inBand)
+      continue
+    }
+    // 띠에서 멀어질수록 무르고 값도 싸다 — 맨 위·맨 아래가 가장 싸다.
+    const gap =
+      bandSize > 0
+        ? row < bandStart
+          ? bandStart - row
+          : row - bandEnd
+        : Math.round(Math.abs(row - (rows - 1) / 2)) + 1
+    out.push(soft[Math.min(soft.length - 1, gap - 1)])
+  }
+  return out
 }
 
 /** 아이템 배치에 쓸 수 있는 종류 목록 (전체 스위치 + 개별 스위치 + 가중치 > 0). */
@@ -72,13 +134,11 @@ export function createLevel(
   const rows = Math.max(1, Math.round(difficulty.brickRows))
   const brickW = PLAY_WIDTH / cols
   const brickH = ARENA.brickHeight
-  const types = brickTypesFor(difficulty.maxBrickDurability)
+  const rowType = rowTypesFor(rows, difficulty.maxBrickDurability)
 
   const bricks: Brick[] = []
   for (let row = 0; row < rows; row += 1) {
-    // 위 행 = types[0] (가장 단단함). 행 수가 종류 수보다 많으면 고르게 나눈다.
-    const typeIdx = Math.min(types.length - 1, Math.floor((row * types.length) / rows))
-    const typeId = types[typeIdx]
+    const typeId = rowType[row]
     const def = BRICK_TYPES[typeId]
     for (let col = 0; col < cols; col += 1) {
       bricks.push({

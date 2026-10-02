@@ -173,6 +173,9 @@ describe('벽 반사', () => {
 
   it('오른쪽 벽·천장에서도 같은 축만 뒤집힌다', () => {
     const right = makeArena()
+    // 벽돌을 치워 벽 반사만 남긴다 — 벽돌 배치가 바뀌어도 이 검사는 그대로여야 한다.
+    for (const brick of right.level.bricks) brick.alive = false
+    right.level.aliveCount = 2 // 판 클리어가 끼어들지 않게 살아 있는 척만 한다
     const rb = placeBall(right, 160, 200, 0.98, -0.2)
     const beforeDy = rb.dy
     for (let i = 0; i < 120 && rb.dx > 0; i += 1) right.step()

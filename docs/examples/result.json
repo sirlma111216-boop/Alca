@@ -72,27 +72,27 @@
   "completedAt": "2026-09-20T02:15:30.000Z",
   "participants": [
     {
-      "id": "stu_k1l2",
+      "id": "stu_a1b2",
       "nickname": "김민준",
-      "score": 240,
+      "score": 320,
       "rank": 1,
       "eligibleRank": 1,
       "excluded": false,
       "playStatus": "played",
-      "livesRemaining": 3,
-      "bricksDestroyed": 15,
+      "livesRemaining": 2,
+      "bricksDestroyed": 18,
       "playedMs": 30000,
       "wavesCleared": 0,
       "clearedAtMs": null,
       "items": [
         {
-          "kind": "catch",
+          "kind": "expand",
           "dropped": 1,
-          "collected": 0
+          "collected": 1
         },
         {
-          "kind": "slow",
-          "dropped": 2,
+          "kind": "catch",
+          "dropped": 1,
           "collected": 0
         },
         {
@@ -102,8 +102,8 @@
         },
         {
           "kind": "life",
-          "dropped": 1,
-          "collected": 1
+          "dropped": 2,
+          "collected": 0
         }
       ],
       "tie": {
@@ -115,13 +115,49 @@
     {
       "id": "stu_e5f6",
       "nickname": "박도윤",
-      "score": 210,
+      "score": 275,
       "rank": 2,
       "eligibleRank": 2,
       "excluded": false,
       "playStatus": "played",
-      "livesRemaining": 3,
+      "livesRemaining": 2,
       "bricksDestroyed": 15,
+      "playedMs": 30000,
+      "wavesCleared": 0,
+      "clearedAtMs": null,
+      "items": [
+        {
+          "kind": "expand",
+          "dropped": 1,
+          "collected": 0
+        },
+        {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
+          "kind": "life",
+          "dropped": 1,
+          "collected": 0
+        }
+      ],
+      "tie": {
+        "tied": false,
+        "tiedWith": [],
+        "resolvedBy": "none"
+      }
+    },
+    {
+      "id": "stu_i9j0",
+      "nickname": "정하은",
+      "score": 195,
+      "rank": 3,
+      "eligibleRank": 3,
+      "excluded": false,
+      "playStatus": "played",
+      "livesRemaining": 5,
+      "bricksDestroyed": 14,
       "playedMs": 30000,
       "wavesCleared": 0,
       "clearedAtMs": null,
@@ -137,19 +173,14 @@
           "collected": 0
         },
         {
-          "kind": "slow",
-          "dropped": 1,
-          "collected": 1
-        },
-        {
           "kind": "shield",
           "dropped": 1,
-          "collected": 0
+          "collected": 1
         },
         {
           "kind": "life",
-          "dropped": 1,
-          "collected": 1
+          "dropped": 2,
+          "collected": 2
         }
       ],
       "tie": {
@@ -159,28 +190,33 @@
       }
     },
     {
-      "id": "stu_a1b2",
+      "id": "stu_k1l2",
       "nickname": "김민준",
-      "score": 175,
-      "rank": 3,
-      "eligibleRank": 3,
+      "score": 190,
+      "rank": 4,
+      "eligibleRank": 4,
       "excluded": false,
       "playStatus": "played",
-      "livesRemaining": 3,
-      "bricksDestroyed": 12,
+      "livesRemaining": 5,
+      "bricksDestroyed": 14,
       "playedMs": 30000,
       "wavesCleared": 0,
       "clearedAtMs": null,
       "items": [
         {
+          "kind": "catch",
+          "dropped": 1,
+          "collected": 1
+        },
+        {
           "kind": "shield",
           "dropped": 1,
-          "collected": 0
+          "collected": 1
         },
         {
           "kind": "life",
-          "dropped": 1,
-          "collected": 0
+          "dropped": 2,
+          "collected": 2
         }
       ],
       "tie": {
@@ -192,100 +228,43 @@
     {
       "id": "stu_c3d4",
       "nickname": "이서연",
-      "score": 165,
-      "rank": 4,
+      "score": 185,
+      "rank": 5,
       "eligibleRank": null,
       "excluded": true,
       "playStatus": "played",
       "livesRemaining": 4,
-      "bricksDestroyed": 11,
+      "bricksDestroyed": 14,
       "playedMs": 30000,
       "wavesCleared": 0,
       "clearedAtMs": null,
       "items": [
         {
-          "kind": "expand",
-          "dropped": 1,
-          "collected": 0
-        },
-        {
           "kind": "catch",
-          "dropped": 1,
-          "collected": 1
-        },
-        {
-          "kind": "slow",
           "dropped": 1,
           "collected": 0
         },
         {
           "kind": "shield",
           "dropped": 1,
-          "collected": 0
+          "collected": 1
         },
         {
           "kind": "life",
-          "dropped": 2,
+          "dropped": 1,
           "collected": 1
         }
       ],
       "tie": {
-        "tied": true,
-        "tiedWith": [
-          "stu_c3d4",
-          "stu_i9j0"
-        ],
-        "resolvedBy": "lives"
-      }
-    },
-    {
-      "id": "stu_i9j0",
-      "nickname": "정하은",
-      "score": 165,
-      "rank": 5,
-      "eligibleRank": 4,
-      "excluded": false,
-      "playStatus": "played",
-      "livesRemaining": 1,
-      "bricksDestroyed": 12,
-      "playedMs": 30000,
-      "wavesCleared": 0,
-      "clearedAtMs": null,
-      "items": [
-        {
-          "kind": "expand",
-          "dropped": 1,
-          "collected": 1
-        },
-        {
-          "kind": "catch",
-          "dropped": 1,
-          "collected": 1
-        },
-        {
-          "kind": "slow",
-          "dropped": 1,
-          "collected": 0
-        },
-        {
-          "kind": "shield",
-          "dropped": 1,
-          "collected": 0
-        }
-      ],
-      "tie": {
-        "tied": true,
-        "tiedWith": [
-          "stu_c3d4",
-          "stu_i9j0"
-        ],
-        "resolvedBy": "lives"
+        "tied": false,
+        "tiedWith": [],
+        "resolvedBy": "none"
       }
     },
     {
       "id": "stu_g7h8",
       "nickname": "최지우",
-      "score": 130,
+      "score": 145,
       "rank": 6,
       "eligibleRank": 5,
       "excluded": false,
@@ -297,11 +276,6 @@
       "clearedAtMs": null,
       "items": [
         {
-          "kind": "expand",
-          "dropped": 1,
-          "collected": 0
-        },
-        {
           "kind": "catch",
           "dropped": 1,
           "collected": 1
@@ -314,7 +288,7 @@
         {
           "kind": "shield",
           "dropped": 1,
-          "collected": 1
+          "collected": 0
         },
         {
           "kind": "life",
@@ -330,12 +304,12 @@
     }
   ],
   "selectedParticipantIds": [
-    "stu_a1b2"
+    "stu_i9j0"
   ],
   "selectionReasons": [
     {
-      "participantId": "stu_a1b2",
-      "nickname": "김민준",
+      "participantId": "stu_i9j0",
+      "nickname": "정하은",
       "eligibleRank": 3,
       "reason": "선정 가능 참가자 5명 중 3위 — 지정 순위 규칙"
     }

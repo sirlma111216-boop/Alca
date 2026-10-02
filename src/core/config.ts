@@ -32,8 +32,21 @@ export const ARENA = {
   brickHeight: 12,
   /** 벽돌 사이 간격. */
   brickGap: 1,
-  /** 첫 벽돌 행의 y 좌표. */
-  brickTop: 52,
+  /**
+   * 점수판(닉네임·점수·순위·목숨)이 끝나는 y 좌표.
+   * 여기까지는 글자가 덮고 있으므로 공이 지나가도 잘 안 보인다.
+   */
+  hudBottom: 48,
+  /**
+   * 첫 벽돌 행의 y 좌표.
+   *
+   * hudBottom(48) 과 이 값 사이는 **일부러 비워 둔 공간**이다.
+   * 공이 벽돌 벽을 뚫고 이 위로 올라가면 천장과 벽돌 윗면 사이를 튀어 다니며
+   * 여러 줄을 한꺼번에 걷어낸다 — 벽돌깨기의 가장 큰 보상이고,
+   * 짧은 경기에서 점수가 벌어지는 주된 이유다.
+   * 공 지름(7.2)의 네 배쯤은 되어야 위에서 가로로 돌아다닐 수 있다.
+   */
+  brickTop: 80,
   /** 패들 윗면 y 좌표. */
   paddleY: 404,
   /** 패들 두께. */
@@ -156,8 +169,8 @@ export const BRICK_TYPES: Record<BrickTypeId, BrickTypeDef> = {
 }
 
 /**
- * 위 행일수록 단단하다. 난이도의 maxBrickDurability 로 잘라 쓴다.
- * 위에서 아래로 은백 → 주황 → 자홍 → 연보라 → 민트 — 가운데 셋이 그라디언트 순서 그대로다.
+ * 단단한 것부터 무른 것 순. 난이도의 maxBrickDurability 로 잘라 쓴다.
+ * 실제로 어느 행에 무엇이 놓이는지는 `level.ts` 의 rowTypesFor 가 정한다.
  */
 export const BRICK_TYPE_ORDER: readonly BrickTypeId[] = [
   'pearl',
@@ -166,6 +179,15 @@ export const BRICK_TYPE_ORDER: readonly BrickTypeId[] = [
   'periwinkle',
   'mint',
 ]
+
+/**
+ * 두 번 이상 맞아야 깨지는 벽돌이 차지하는 **가운데 띠**의 비율.
+ *
+ * 나머지 행(위아래)은 전부 한 번에 깨진다. 위를 무르게 두는 게 핵심이다 —
+ * 그래야 공이 벽을 뚫고 위 빈 공간으로 올라갈 수 있다.
+ * 올리면 어려워지고, 0 으로 두면 모든 벽돌이 한 번에 깨진다.
+ */
+export const TOUGH_BAND_RATIO = 0.42
 
 /** 한 판(웨이브)의 벽돌을 전부 부쉈을 때 주는 보너스. */
 export const WAVE_CLEAR_BONUS = 500

@@ -449,8 +449,8 @@ export function createMatchRenderer(options: RendererOptions): MatchRenderer {
       tc.strokeStyle = withAlpha(PALETTE.wallHighlight, 0.45)
       tc.lineWidth = Math.max(0.5, s * 0.6)
       tc.beginPath()
-      tc.moveTo(t, Math.round((ARENA.brickTop - 4) * s) + 0.5)
-      tc.lineTo(aw - t, Math.round((ARENA.brickTop - 4) * s) + 0.5)
+      tc.moveTo(t, Math.round(ARENA.hudBottom * s) + 0.5)
+      tc.lineTo(aw - t, Math.round(ARENA.hudBottom * s) + 0.5)
       tc.stroke()
     }
 
@@ -977,9 +977,9 @@ export function createMatchRenderer(options: RendererOptions): MatchRenderer {
     c.rect(cell.ax, cell.ay, cell.aw, cell.ah)
     c.clip()
 
-    // 순위와 목숨 — 경기장 위쪽 빈 띠(벽돌이 시작되기 전)에 그린다.
+    // 순위와 목숨 — 점수판 띠 안에 그린다 (벽돌 위의 빈 공간은 비워 둔다).
     const s = cell.scale
-    const bandY = cell.ay + (ARENA.brickTop - 30) * s
+    const bandY = cell.ay + (ARENA.hudBottom - 26) * s
     const bandH = 22 * s
     const rankPx = Math.max(8, Math.min(16, bandH))
     c.font = `700 ${rankPx}px ${FONTS.ui}`
