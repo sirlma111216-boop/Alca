@@ -574,7 +574,9 @@ export function mountBrickPick(
       audio.play('ui-click')
       cancel('user')
     })
-    actions.append(ready, skip, quit)
+    // 참가자가 한 명뿐이면(수업 앱이 학생마다 따로 띄우는 경우) 건너뛰기·그만두기를 두지 않는다 — 누를 것은 [준비됐어요] 하나다.
+    if (match.runs.length === 1) actions.append(ready)
+    else actions.append(ready, skip, quit)
     p.appendChild(actions)
     return p
   }
@@ -615,7 +617,7 @@ export function mountBrickPick(
       audio.play('ui-click')
       cancel('user')
     })
-    if (isManual) {
+    if (isManual && match.runs.length > 1) {
       const skip = el('button', 'bp-btn', '이 참가자 건너뛰기')
       skip.type = 'button'
       skip.addEventListener('click', () => {

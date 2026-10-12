@@ -36,14 +36,14 @@
 # 여러 개면 공백으로 이어 쓴다:
 #   frame-ancestors 'self' https://lesson.example.com https://class.example.org
 /embed/*
-  Content-Security-Policy: frame-ancestors 'self' https://lesson.example.com
+  Content-Security-Policy: frame-ancestors 'self' https://scienced.labbitory.com
   # 임베드 진입점은 HTML 한 장뿐이다. 새로 배포하면 바로 반영돼야 하므로 캐시하지 않는다.
   Cache-Control: no-cache
 
 # /embed (끝 슬래시 없는 주소)도 같은 규칙을 받게 한다.
 # 보통은 /embed/ 로 넘겨 주지만, 중간 프록시가 그대로 내려줄 때를 대비한 안전장치다.
 /embed
-  Content-Security-Policy: frame-ancestors 'self' https://lesson.example.com
+  Content-Security-Policy: frame-ancestors 'self' https://scienced.labbitory.com
 
 
 # ── 개발용 허용 (운영 목록과 절대 섞지 마라) ────────────────────────────────
