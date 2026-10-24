@@ -35,7 +35,7 @@ import type {
   RosterView,
 } from './protocol'
 
-/** 수업이 끝나고 이만큼 지나면 방을 비운다. 두 차시가 한 주 떨어져 있어도 이어지게. */
+/** 마지막 저장 후 이만큼 지나면 방을 비운다. 두 차시가 한 주 떨어져 있어도 이어지게. */
 const TTL_MS = 8 * 24 * 60 * 60 * 1000
 
 /** 30명이 한꺼번에 들어와도 방송이 폭주하지 않도록 묶어 보낸다. */
@@ -86,6 +86,8 @@ export class RoomSession extends DurableObject {
       this.loading = (async () => {
         const saved = (await this.ctx.storage.get('state')) as Partial<RoomState> | undefined
         const fresh = saved && Date.now() - (saved.updatedAt ?? 0) < TTL_MS
+        if (saved && !fresh) await this.ctx.storage.deleteAll()
+        if (fresh) await this.ctx.storage.setAlarm((saved.updatedAt ?? 0) + TTL_MS)
         // 기본 칸을 앞에 늘어놓는 게 요령이다 — 예전 판에 없던 칸이 생겨도 undefined 로 안 터진다.
         this.state = fresh
           ? {
@@ -116,6 +118,23 @@ export class RoomSession extends DurableObject {
     if (!this.state) return
     this.state.updatedAt = Date.now()
     await this.ctx.storage.put('state', this.state)
+    await this.ctx.storage.setAlarm(this.state.updatedAt + TTL_MS)
+  }
+
+  override async alarm(): Promise<void> {
+    const saved = await this.ctx.storage.get<RoomState>('state')
+    if (saved && (saved.updatedAt ?? 0) + TTL_MS > Date.now()) {
+      await this.ctx.storage.setAlarm(saved.updatedAt + TTL_MS)
+      return
+    }
+    if (this.rosterTimer) clearTimeout(this.rosterTimer)
+    if (this.boardTimer) clearTimeout(this.boardTimer)
+    this.rosterTimer = this.boardTimer = null
+    for (const ws of this.ctx.getWebSockets()) { try { ws.close(1000, '보관기간 만료') } catch {} }
+    await this.ctx.storage.deleteAll()
+    await this.ctx.storage.deleteAlarm()
+    this.state = null
+    this.loading = null
   }
 
   /* ------------------------------------------------------------ 조회 */
