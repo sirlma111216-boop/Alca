@@ -64,6 +64,7 @@
 
   // 배포 로그·오류를 Cloudflare 대시보드에서 보려면 켠다. 개인정보는 남기지 않는다.
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "redact_query_string": true
   }
 }

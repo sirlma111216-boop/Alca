@@ -73,6 +73,16 @@ interface Attachment {
 }
 
 export class RoomSession extends DurableObject {
+  /** Internal namespace RPC: re-arm legacy rooms without joining or changing activity. */
+  async ensureRetention(): Promise<{ stored: boolean; armed: boolean }> {
+    const saved = await this.ctx.storage.get<RoomState>('state')
+    if (!saved) return { stored: false, armed: false }
+    if (!Number.isFinite(saved.updatedAt) || saved.updatedAt <= 0) throw new Error('Missing retention timestamp')
+    const deadline = Math.max(Date.now() + 1000, saved.updatedAt + TTL_MS)
+    const alarm = await this.ctx.storage.getAlarm()
+    if (alarm === null || alarm > deadline) await this.ctx.storage.setAlarm(deadline)
+    return { stored: true, armed: true }
+  }
   private state: RoomState | null = null
   private loading: Promise<void> | null = null
   private rosterTimer: ReturnType<typeof setTimeout> | null = null
